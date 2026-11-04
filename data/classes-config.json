@@ -10,6 +10,10 @@
     "practice_enabled": true,
     "assigned_problems": ["py10_01", "py10_02", "py10_03", "py10_04"],
     "assigned_exam": true,
+    "exam_title": "Đề Kiểm Tra Định Kỳ Giữa Kỳ - Tin Học 10 (Chuẩn BGD 2025)",
+    "exam_duration_minutes": 45,
+    "penalty_mode": "TIERED",
+    "max_violations": 3,
     "deadline": "2026-11-15"
   },
   {
@@ -23,6 +27,10 @@
     "practice_enabled": true,
     "assigned_problems": ["py10_01", "py10_02"],
     "assigned_exam": true,
+    "exam_title": "Đề Kiểm Tra Định Kỳ Giữa Kỳ - Tin Học 10 (Chuẩn BGD 2025)",
+    "exam_duration_minutes": 45,
+    "penalty_mode": "TIERED",
+    "max_violations": 3,
     "deadline": "2026-11-15"
   },
   {
@@ -36,6 +44,10 @@
     "practice_enabled": true,
     "assigned_problems": ["cs11_algo_01", "cs11_algo_02", "cs11_sql_01", "cs11_sql_02"],
     "assigned_exam": true,
+    "exam_title": "Đề Kiểm Tra Định Kỳ - Tin Học 11 Định Hướng CS (Chuẩn BGD 2025)",
+    "exam_duration_minutes": 45,
+    "penalty_mode": "TIERED",
+    "max_violations": 3,
     "deadline": "2026-11-20"
   },
   {
@@ -49,6 +61,10 @@
     "practice_enabled": true,
     "assigned_problems": ["ict11_web_01", "ict11_web_02"],
     "assigned_exam": true,
+    "exam_title": "Đề Kiểm Tra Định Kỳ - Tin Học 11 Định Hướng ICT (Chuẩn BGD 2025)",
+    "exam_duration_minutes": 45,
+    "penalty_mode": "TIERED",
+    "max_violations": 3,
     "deadline": "2026-11-20"
   }
 ]

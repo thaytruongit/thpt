@@ -1,13 +1,29 @@
 /**
  * ThayTruongIT - THPT Hub (OLM.vn Inspired LMS Architecture)
- * Quản lý Lớp học theo Khối 10/11, Nạp Tài khoản (Họ tên, Lớp, Ngày sinh),
- * Phân quyền Học sinh theo Lớp/Khối & Bàn làm việc Giáo viên Tách biệt Hoàn toàn
+ * 1. Quản lý Lớp học theo Khối 10/11, Nạp Tài khoản (Họ tên, Lớp, Ngày sinh), Đổi quyền theo Lớp/Khối
+ * 2. Giao bài tập theo Bài học SGK & Điều khiển Đề thi (Giao đề, Mở đề, Khóa đề, Cấu hình thời gian & Mức trừ điểm)
+ * 3. Engine Giám sát Thi trực tuyến: Đếm ngược thời gian, Chống sao chép, Chống chuyển tab, Cảnh báo trừ 0.5 -> 1.0 điểm
  */
 
 let SQL_ENGINE = null;
 let CURRENT_STUDENT_ID = 'HS1001';
 let FOCUS_LOCK_ACTIVE = false;
 let EXAM_SHUFFLE_CODE = '101';
+
+// Trạng thái Phiên làm bài thi có giám sát của Học sinh
+window.EXAM_PROCTOR_STATE = {
+    inProgress: false,
+    submitted: false,
+    timerInterval: null,
+    durationMinutes: 45,
+    remainingSeconds: 45 * 60,
+    penaltyMode: 'TIERED', // 'TIERED' (0.5đ -> 1.0đ), 'FIXED_05' (0.5đ), 'FIXED_10' (1.0đ)
+    maxViolations: 3,
+    violationsCount: 0,
+    totalPenaltyPoints: 0,
+    violationLogs: [],
+    lastViolationTimestamp: 0
+};
 
 // Danh sách các Lớp học chuẩn theo Khối 10 & Khối 11
 const DEFAULT_CLASSES = [
@@ -22,6 +38,10 @@ const DEFAULT_CLASSES = [
         practice_enabled: true,
         assigned_problems: ['py10_01', 'py10_02', 'py10_03', 'py10_04'],
         assigned_exam: true,
+        exam_title: 'Đề Kiểm Tra Định Kỳ Giữa Kỳ - Tin Học 10 (Chuẩn BGD 2025)',
+        exam_duration_minutes: 45,
+        penalty_mode: 'TIERED',
+        max_violations: 3,
         deadline: '2026-11-15'
     },
     {
@@ -35,6 +55,10 @@ const DEFAULT_CLASSES = [
         practice_enabled: true,
         assigned_problems: ['py10_01', 'py10_02'],
         assigned_exam: true,
+        exam_title: 'Đề Kiểm Tra Định Kỳ Giữa Kỳ - Tin Học 10 (Chuẩn BGD 2025)',
+        exam_duration_minutes: 45,
+        penalty_mode: 'TIERED',
+        max_violations: 3,
         deadline: '2026-11-15'
     },
     {
@@ -48,6 +72,10 @@ const DEFAULT_CLASSES = [
         practice_enabled: true,
         assigned_problems: ['cs11_algo_01', 'cs11_algo_02', 'cs11_sql_01', 'cs11_sql_02'],
         assigned_exam: true,
+        exam_title: 'Đề Kiểm Tra Định Kỳ - Tin Học 11 Định Hướng CS (Chuẩn BGD 2025)',
+        exam_duration_minutes: 45,
+        penalty_mode: 'TIERED',
+        max_violations: 3,
         deadline: '2026-11-20'
     },
     {
@@ -61,9 +89,27 @@ const DEFAULT_CLASSES = [
         practice_enabled: true,
         assigned_problems: ['ict11_web_01', 'ict11_web_02'],
         assigned_exam: true,
+        exam_title: 'Đề Kiểm Tra Định Kỳ - Tin Học 11 Định Hướng ICT (Chuẩn BGD 2025)',
+        exam_duration_minutes: 45,
+        penalty_mode: 'TIERED',
+        max_violations: 3,
         deadline: '2026-11-20'
     }
 ];
+
+// Ánh xạ Bài học SGK chuẩn GDPT 2018 cho từng mã bài tập
+const DEFAULT_LESSON_MAP = {
+    'py10_01': 'Bài 16: Ngôn ngữ lập trình bậc cao và Python',
+    'py10_02': 'Bài 19: Câu lệnh rẽ nhánh If - Else',
+    'py10_03': 'Bài 20: Câu lệnh lặp For và Hàm trong Python',
+    'py10_04': 'Bài 25: Kiểu dữ liệu Xâu ký tự (String)',
+    'cs11_algo_01': 'Chủ đề F - Bài 11: Thuật toán Tìm kiếm nhị phân',
+    'cs11_algo_02': 'Chủ đề F - Bài 12: Thuật toán Sắp xếp (Chia để trị)',
+    'cs11_sql_01': 'Chủ đề F - Bài 15: Truy vấn CSDL quan hệ (SELECT - WHERE)',
+    'cs11_sql_02': 'Chủ đề F - Bài 16: Truy vấn gom nhóm & Kết nối bảng SQL',
+    'ict11_web_01': 'Chủ đề E - Bài 1: Cấu trúc ngữ nghĩa trang Web HTML5',
+    'ict11_web_02': 'Chủ đề E - Bài 2: Định dạng CSS3 & Bố cục trang Web'
+};
 
 window.CLASSES_LIST = [];
 
@@ -83,6 +129,7 @@ async function loadGitHubDataFiles() {
                 if (Array.isArray(data) && data.length > 0) {
                     APP_DATA[item.key] = data.map(p => ({
                         ...p,
+                        lesson_title: p.lesson_title || DEFAULT_LESSON_MAP[p.id] || `Bài học: ${p.category || 'Chuyên đề Tin học'}`,
                         type: p.type || 'ALGORITHM',
                         sample_in: p.sample_in || p.sample_input || '',
                         sample_out: p.sample_out || p.sample_output || '',
@@ -94,6 +141,15 @@ async function loadGitHubDataFiles() {
             console.info(`[DataLoader] Sử dụng dữ liệu dự phòng cho ${item.path}`);
         }
     }
+
+    // Gắn tên Bài học mặc định cho dữ liệu dự phòng
+    ['k10', 'k11-cs', 'k11-ict'].forEach(k => {
+        (APP_DATA[k] || []).forEach(p => {
+            if (!p.lesson_title) {
+                p.lesson_title = DEFAULT_LESSON_MAP[p.id] || `Bài học: ${p.category || 'Chuyên đề Tin học'}`;
+            }
+        });
+    });
 
     // Hợp nhất các bài tập do Giáo viên thêm mới
     const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
@@ -109,7 +165,7 @@ async function loadGitHubDataFiles() {
     });
 
     // Tải cấu trúc Lớp học (Khối 10 & Khối 11)
-    const savedClasses = localStorage.getItem('thpt_classes_v3');
+    const savedClasses = localStorage.getItem('thpt_classes_v4');
     if (savedClasses) {
         try { window.CLASSES_LIST = JSON.parse(savedClasses); } catch (e) {}
     }
@@ -122,6 +178,16 @@ async function loadGitHubDataFiles() {
     if (!window.CLASSES_LIST || window.CLASSES_LIST.length === 0) {
         window.CLASSES_LIST = JSON.parse(JSON.stringify(DEFAULT_CLASSES));
     }
+    // Chuẩn hóa các trường cấu hình thi cho từng Lớp
+    window.CLASSES_LIST.forEach(c => {
+        if (!c.exam_title) c.exam_title = `Đề Kiểm Tra Định Kỳ - Lớp ${c.id} (Chuẩn BGD 2025)`;
+        if (!c.exam_duration_minutes) c.exam_duration_minutes = 45;
+        if (!c.penalty_mode) c.penalty_mode = 'TIERED';
+        if (!c.max_violations) c.max_violations = 3;
+        if (!Array.isArray(c.assigned_problems) || c.assigned_problems.length === 0) {
+            c.assigned_problems = (APP_DATA[c.track] || []).map(p => p.id);
+        }
+    });
     saveClassesToStorage();
 
     // Tải danh sách tài khoản Học sinh
@@ -134,26 +200,6 @@ async function loadGitHubDataFiles() {
             const rRes = await fetch(`data/students-roster.json?v=${Date.now()}`);
             if (rRes.ok) window.STUDENTS_ROSTER = await rRes.json();
         } catch (e) {}
-    }
-    if (!window.STUDENTS_ROSTER || window.STUDENTS_ROSTER.length === 0) {
-        window.STUDENTS_ROSTER = STUDENTS_MOCK.map((s, idx) => ({
-            ...s,
-            dob: idx < 2 ? '12/05/2011' : '19/02/2010',
-            grade: idx < 2 ? 10 : 11,
-            class_id: idx < 2 ? '10A1' : (idx < 4 ? '11CS1' : '11ICT1'),
-            track: idx < 2 ? 'k10' : (idx < 4 ? 'k11-cs' : 'k11-ict'),
-            seat: `Máy 0${idx + 1}`,
-            pin: idx < 2 ? '12052011' : '19022010',
-            permission_status: 'ACTIVE',
-            smart_score: 85,
-            xp: 1250 + idx * 150,
-            level: 3,
-            streak: 5 + idx,
-            status: 'AC',
-            current_task: 'py10_01',
-            completed_tasks: ['py10_01'],
-            tab_warnings: 0
-        }));
     }
     saveRosterToStorage();
 
@@ -168,14 +214,15 @@ async function loadGitHubDataFiles() {
         } catch (e) {}
     }
 
-    // Khởi chạy hệ thống Đăng nhập & Phân quyền RBAC
+    initAntiCheatEventListeners();
+
     if (typeof initAuthSystem === 'function') {
         initAuthSystem();
     }
 }
 
 function saveClassesToStorage() {
-    localStorage.setItem('thpt_classes_v3', JSON.stringify(window.CLASSES_LIST));
+    localStorage.setItem('thpt_classes_v4', JSON.stringify(window.CLASSES_LIST));
 }
 
 function saveRosterToStorage() {
@@ -187,7 +234,7 @@ function getClassById(classId) {
 }
 
 function getActiveStudent() {
-    return (window.STUDENTS_ROSTER || []).find(s => s.id === CURRENT_STUDENT_ID) || window.STUDENTS_ROSTER[0];
+    return (window.STUDENTS_ROSTER || []).find(s => s.id === CURRENT_STUDENT_ID) || (window.STUDENTS_ROSTER && window.STUDENTS_ROSTER[0]);
 }
 
 function normalizeDobToPin(dobStr) {
@@ -195,7 +242,10 @@ function normalizeDobToPin(dobStr) {
     return digits.length >= 4 ? digits : '1111';
 }
 
-// --- 2. QUẢN LÝ LỚP HỌC THEO KHỐI 10, 11 & GIAO BÀI KIỂU OLM.VN ---
+// ============================================================================
+// 2. QUẢN LÝ LỚP HỌC THEO KHỐI 10, 11 & GIAO BÀI TẬP THEO BÀI HỌC
+// ============================================================================
+
 function createNewClassByGrade() {
     const classCode = (document.getElementById('new-class-code').value || '').trim().toUpperCase();
     const className = (document.getElementById('new-class-name').value || '').trim();
@@ -230,6 +280,10 @@ function createNewClassByGrade() {
         practice_enabled: true,
         assigned_problems: defaultProblems,
         assigned_exam: true,
+        exam_title: `Đề Kiểm Tra Định Kỳ - Lớp ${classCode} (Chuẩn BGD 2025)`,
+        exam_duration_minutes: 45,
+        penalty_mode: 'TIERED',
+        max_violations: 3,
         deadline: '2026-11-30'
     };
 
@@ -261,6 +315,27 @@ function toggleClassExamPermission(classId) {
     cls.exam_enabled = !cls.exam_enabled;
     saveClassesToStorage();
     renderAdminAllViews();
+    if (typeof renderStudentPortalHeaderAndTasks === 'function') {
+        renderStudentPortalHeaderAndTasks();
+    }
+}
+
+function setClassExamState(classId, isOpen) {
+    if (classId === 'ALL') {
+        (window.CLASSES_LIST || []).forEach(c => { c.exam_enabled = isOpen; });
+    } else {
+        const cls = getClassById(classId);
+        if (cls) cls.exam_enabled = isOpen;
+    }
+    saveClassesToStorage();
+    renderAdminAllViews();
+    if (typeof renderStudentPortalHeaderAndTasks === 'function') {
+        renderStudentPortalHeaderAndTasks();
+    }
+    alert(isOpen
+        ? `🔓 Đã MỞ ĐỀ THI cho ${classId === 'ALL' ? 'toàn bộ các lớp' : 'Lớp ' + classId}! Học sinh đã có thể vào làm bài.`
+        : `🔒 Đã KHÓA ĐỀ THI đối với ${classId === 'ALL' ? 'toàn bộ các lớp' : 'Lớp ' + classId}! Học sinh không thể truy cập đề thi.`
+    );
 }
 
 function deleteClassById(classId) {
@@ -273,7 +348,480 @@ function deleteClassById(classId) {
     renderAdminAllViews();
 }
 
-// --- 3. NẠP TÀI KHOẢN HỌC SINH THEO KHỐI (HỌ TÊN, LỚP, NGÀY SINH - CHUẨN OLM.VN) ---
+/**
+ * GIAO BÀI TẬP THEO BÀI HỌC CHO TỪNG LỚP / KHỐI
+ */
+function renderLessonAssignmentManager() {
+    const classSel = document.getElementById('assign-lesson-class-select');
+    const checklistContainer = document.getElementById('assign-lesson-checklist');
+    const deadlineInput = document.getElementById('assign-lesson-deadline');
+    if (!classSel || !checklistContainer) return;
+
+    const currentClassId = classSel.value || (window.CLASSES_LIST[0] && window.CLASSES_LIST[0].id) || '10A1';
+    const cls = getClassById(currentClassId);
+    if (!cls) return;
+
+    if (deadlineInput && cls.deadline) {
+        deadlineInput.value = cls.deadline;
+    }
+
+    const trackProblems = APP_DATA[cls.track] || [];
+    const assignedSet = new Set(cls.assigned_problems || []);
+
+    checklistContainer.innerHTML = trackProblems.map(p => {
+        const checked = assignedSet.has(p.id) ? 'checked' : '';
+        const lessonLabel = p.lesson_title || DEFAULT_LESSON_MAP[p.id] || p.category;
+        return `
+            <label class="p-3 rounded-xl border ${checked ? 'bg-indigo-50/70 border-indigo-300' : 'bg-white border-slate-200'} flex items-start gap-3 cursor-pointer hover:border-indigo-400 transition">
+                <input type="checkbox" name="lesson_prob_chk" value="${p.id}" ${checked} class="mt-1 w-4 h-4 text-indigo-600 rounded">
+                <div class="text-xs flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-1">
+                        <span class="font-extrabold text-indigo-800">📘 ${lessonLabel}</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">${p.type || 'PYTHON'} • ${p.difficulty}</span>
+                    </div>
+                    <div class="font-bold text-slate-900 mt-1">${p.title} <span class="text-slate-400 font-mono">(${p.id})</span></div>
+                </div>
+            </label>
+        `;
+    }).join('');
+}
+
+function saveLessonAssignmentForClass() {
+    const classSel = document.getElementById('assign-lesson-class-select');
+    const deadlineInput = document.getElementById('assign-lesson-deadline');
+    if (!classSel) return;
+
+    const targetClassId = classSel.value;
+    const cls = getClassById(targetClassId);
+    if (!cls) return;
+
+    const checkedIds = [...document.querySelectorAll('input[name="lesson_prob_chk"]:checked')].map(el => el.value);
+    if (checkedIds.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 bài học / bài tập để giao cho lớp!');
+        return;
+    }
+
+    cls.assigned_problems = checkedIds;
+    if (deadlineInput && deadlineInput.value) {
+        cls.deadline = deadlineInput.value;
+    }
+
+    saveClassesToStorage();
+    renderLessonAssignmentManager();
+    renderClassesManagerCards();
+    if (typeof renderStudentPortalHeaderAndTasks === 'function') {
+        renderStudentPortalHeaderAndTasks();
+    }
+
+    alert(`✅ Đã giao ${checkedIds.length} bài tập theo bài học cho Lớp ${cls.id} (Khối ${cls.grade})!\nHạn hoàn thành: ${cls.deadline}`);
+}
+
+/**
+ * GIAO ĐỀ THI, MỞ ĐỀ THI, KHÓA ĐỀ THI & CẤU HÌNH THỜI GIAN + MỨC TRỪ ĐIỂM CHỐNG GIAN LẬN
+ */
+function onChangeExamConfigClassSelect() {
+    const classSel = document.getElementById('exam-cfg-class-select');
+    if (!classSel) return;
+    const val = classSel.value;
+    const cls = val === 'ALL' ? window.CLASSES_LIST[0] : getClassById(val);
+    if (!cls) return;
+
+    const titleEl = document.getElementById('exam-cfg-title');
+    const durEl = document.getElementById('exam-cfg-duration');
+    const penEl = document.getElementById('exam-cfg-penalty');
+    const maxVioEl = document.getElementById('exam-cfg-max-violations');
+
+    if (titleEl) titleEl.value = cls.exam_title || `Đề Kiểm Tra Định Kỳ - Lớp ${cls.id} (Chuẩn BGD 2025)`;
+    if (durEl) durEl.value = cls.exam_duration_minutes || 45;
+    if (penEl) penEl.value = cls.penalty_mode || 'TIERED';
+    if (maxVioEl) maxVioEl.value = cls.max_violations || 3;
+}
+
+function saveAndDispatchExamToClass(openImmediately = true) {
+    const classSel = document.getElementById('exam-cfg-class-select');
+    const titleEl = document.getElementById('exam-cfg-title');
+    const durEl = document.getElementById('exam-cfg-duration');
+    const penEl = document.getElementById('exam-cfg-penalty');
+    const maxVioEl = document.getElementById('exam-cfg-max-violations');
+
+    const targetId = classSel ? classSel.value : 'ALL';
+    const examTitle = (titleEl ? titleEl.value.trim() : '') || 'Đề Kiểm Tra Định Kỳ Chuẩn Cấu Trúc BGD 2025';
+    const durationMins = Math.max(5, Math.min(180, parseInt(durEl ? durEl.value : 45) || 45));
+    const penaltyMode = penEl ? penEl.value : 'TIERED';
+    const maxViolations = Math.max(1, parseInt(maxVioEl ? maxVioEl.value : 3) || 3);
+
+    const targets = targetId === 'ALL' ? (window.CLASSES_LIST || []) : [getClassById(targetId)].filter(Boolean);
+
+    targets.forEach(c => {
+        c.assigned_exam = true;
+        c.exam_enabled = openImmediately;
+        c.exam_title = examTitle;
+        c.exam_duration_minutes = durationMins;
+        c.penalty_mode = penaltyMode;
+        c.max_violations = maxViolations;
+    });
+
+    saveClassesToStorage();
+    renderAdminAllViews();
+    if (typeof renderStudentPortalHeaderAndTasks === 'function') {
+        renderStudentPortalHeaderAndTasks();
+    }
+
+    const penaltyDesc = penaltyMode === 'FIXED_10'
+        ? 'Trừ cố định 1.0 điểm / lần vi phạm'
+        : (penaltyMode === 'FIXED_05' ? 'Trừ cố định 0.5 điểm / lần vi phạm' : 'Lần 1 trừ 0.5 điểm, từ lần 2 trở đi trừ 1.0 điểm / lần');
+
+    alert(
+        `${openImmediately ? '📤 ĐÃ GIAO & 🔓 MỞ ĐỀ THI' : '🔒 ĐÃ CẬP NHẬT & KHÓA ĐỀ THI'}!\n` +
+        `• Phạm vi áp dụng: ${targetId === 'ALL' ? 'Tất cả các lớp Khối 10 & 11' : 'Lớp ' + targetId}\n` +
+        `• Tên đề thi: ${examTitle}\n` +
+        `• Thời gian làm bài: ${durationMins} phút\n` +
+        `• Chế độ chống sao chép & chuyển tab: ${penaltyDesc} (Tối đa ${maxViolations} lần vi phạm)`
+    );
+}
+
+// ============================================================================
+// 3. ENGINE GIÁM SÁT THI TRỰC TUYẾN & CHỐNG GIAN LẬN CHO HỌC SINH
+// ============================================================================
+
+function playWarningBeepSound() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(520, ctx.currentTime);
+        osc.frequency.setValueAtTime(360, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+    } catch (e) {}
+}
+
+function syncStudentExamLobbyState() {
+    const stu = getActiveStudent();
+    if (!stu) return;
+    const clsObj = getClassById(stu.class_id);
+
+    const isLocked = stu.permission_status === 'LOCKED' || (clsObj && clsObj.exam_enabled === false);
+    const lockNoticeEl = document.getElementById('student-exam-lock-notice');
+    const lobbyEl = document.getElementById('student-exam-lobby');
+    const activeWorkspaceEl = document.getElementById('student-exam-active-workspace');
+
+    const examTitle = (clsObj && clsObj.exam_title) ? clsObj.exam_title : 'Đề Kiểm Tra Định Kỳ Tin Học THPT (Chuẩn BGD 2025)';
+    const examDur = (clsObj && clsObj.exam_duration_minutes) ? clsObj.exam_duration_minutes : 45;
+    const penaltyMode = (clsObj && clsObj.penalty_mode) ? clsObj.penalty_mode : 'TIERED';
+    const maxVio = (clsObj && clsObj.max_violations) ? clsObj.max_violations : 3;
+
+    const penaltyText = penaltyMode === 'FIXED_10'
+        ? 'Trừ 1.0 điểm cho mỗi lần sao chép hoặc chuyển tab'
+        : (penaltyMode === 'FIXED_05'
+            ? 'Trừ 0.5 điểm cho mỗi lần sao chép hoặc chuyển tab'
+            : 'Trừ 0.5 điểm (lần 1 - mức nhẹ) và trừ 1.0 điểm (từ lần 2 - mức nặng)');
+
+    // Cập nhật thông tin trên Phòng chờ thi (Lobby)
+    const lobbyTitleEl = document.getElementById('exam-lobby-title');
+    const lobbyDurEl = document.getElementById('exam-lobby-duration');
+    const lobbyPenEl = document.getElementById('exam-lobby-penalty-rule');
+    const lobbyMaxVioEl = document.getElementById('exam-lobby-max-vio');
+    const activeTitleEl = document.getElementById('exam-active-title');
+
+    if (lobbyTitleEl) lobbyTitleEl.textContent = examTitle;
+    if (activeTitleEl) activeTitleEl.textContent = examTitle;
+    if (lobbyDurEl) lobbyDurEl.textContent = `${examDur} Phút`;
+    if (lobbyPenEl) lobbyPenEl.textContent = penaltyText;
+    if (lobbyMaxVioEl) lobbyMaxVioEl.textContent = `${maxVio} lần vi phạm`;
+
+    if (isLocked) {
+        // Nếu Giáo viên khóa đề thi và Học sinh đang làm dở -> Tự động thu bài ngay
+        if (window.EXAM_PROCTOR_STATE.inProgress) {
+            stopStudentExamTimer();
+            window.EXAM_PROCTOR_STATE.inProgress = false;
+        }
+        if (lockNoticeEl) lockNoticeEl.classList.remove('hidden');
+        if (lobbyEl) lobbyEl.classList.add('hidden');
+        if (activeWorkspaceEl) activeWorkspaceEl.classList.add('hidden');
+        return;
+    }
+
+    if (lockNoticeEl) lockNoticeEl.classList.add('hidden');
+
+    if (window.EXAM_PROCTOR_STATE.inProgress || window.EXAM_PROCTOR_STATE.submitted) {
+        if (lobbyEl) lobbyEl.classList.add('hidden');
+        if (activeWorkspaceEl) activeWorkspaceEl.classList.remove('hidden');
+    } else {
+        if (lobbyEl) lobbyEl.classList.remove('hidden');
+        if (activeWorkspaceEl) activeWorkspaceEl.classList.add('hidden');
+    }
+}
+
+function startStudentTimedExam() {
+    const stu = getActiveStudent();
+    if (!stu) return;
+    const clsObj = getClassById(stu.class_id);
+
+    if (stu.permission_status === 'LOCKED' || (clsObj && clsObj.exam_enabled === false)) {
+        alert('🔒 Giáo viên hiện đang khóa đề thi đối với lớp hoặc tài khoản của em!');
+        syncStudentExamLobbyState();
+        return;
+    }
+
+    const durMins = (clsObj && clsObj.exam_duration_minutes) ? Number(clsObj.exam_duration_minutes) : 45;
+    const penMode = (clsObj && clsObj.penalty_mode) ? clsObj.penalty_mode : 'TIERED';
+    const maxVio = (clsObj && clsObj.max_violations) ? Number(clsObj.max_violations) : 3;
+
+    stopStudentExamTimer();
+
+    window.EXAM_PROCTOR_STATE = {
+        inProgress: true,
+        submitted: false,
+        timerInterval: null,
+        durationMinutes: durMins,
+        remainingSeconds: durMins * 60,
+        penaltyMode: penMode,
+        maxViolations: maxVio,
+        violationsCount: 0,
+        totalPenaltyPoints: 0,
+        violationLogs: [],
+        lastViolationTimestamp: 0
+    };
+
+    // Reset bài làm cũ nếu có
+    const formEl = document.getElementById('exam-form');
+    if (formEl) formEl.reset();
+    document.querySelectorAll('[id^="p1_exp_"], [id^="p2_exp_"], [id^="p3_exp_"]').forEach(el => el.classList.add('hidden'));
+    const resBanner = document.getElementById('exam-final-result-banner');
+    if (resBanner) resBanner.classList.add('hidden');
+
+    updateExamProctorHUD();
+    syncStudentExamLobbyState();
+
+    window.EXAM_PROCTOR_STATE.timerInterval = setInterval(() => {
+        if (!window.EXAM_PROCTOR_STATE.inProgress) return;
+        window.EXAM_PROCTOR_STATE.remainingSeconds--;
+        updateExamProctorHUD();
+
+        if (window.EXAM_PROCTOR_STATE.remainingSeconds <= 0) {
+            stopStudentExamTimer();
+            submitExam(true, 'Hết thời gian làm bài theo quy định của Giáo viên');
+        }
+    }, 1000);
+}
+
+function stopStudentExamTimer() {
+    if (window.EXAM_PROCTOR_STATE && window.EXAM_PROCTOR_STATE.timerInterval) {
+        clearInterval(window.EXAM_PROCTOR_STATE.timerInterval);
+        window.EXAM_PROCTOR_STATE.timerInterval = null;
+    }
+}
+
+function updateExamProctorHUD() {
+    const st = window.EXAM_PROCTOR_STATE;
+    const timerEl = document.getElementById('exam-countdown-display');
+    const vioEl = document.getElementById('exam-proctor-violations');
+    const penEl = document.getElementById('exam-proctor-penalty');
+    const logListEl = document.getElementById('exam-violation-logs-inline');
+
+    if (timerEl) {
+        const secs = Math.max(0, st.remainingSeconds);
+        const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+        const ss = String(secs % 60).padStart(2, '0');
+        timerEl.textContent = `${mm}:${ss}`;
+        if (secs <= 300) {
+            timerEl.className = 'text-xl font-mono font-black text-rose-600 animate-pulse';
+        } else {
+            timerEl.className = 'text-xl font-mono font-black text-indigo-700';
+        }
+    }
+
+    if (vioEl) {
+        vioEl.textContent = `${st.violationsCount} / ${st.maxViolations} lần`;
+    }
+    if (penEl) {
+        penEl.textContent = `-${st.totalPenaltyPoints.toFixed(1)} điểm`;
+    }
+
+    if (logListEl) {
+        if (st.violationLogs.length === 0) {
+            logListEl.innerHTML = `<span class="text-emerald-700 font-semibold">✔ Chưa có vi phạm quy chế nào. Hãy tập trung làm bài!</span>`;
+        } else {
+            logListEl.innerHTML = st.violationLogs.map(l =>
+                `<div class="text-[11px] text-rose-700 font-semibold">⚠️ [${l.time}] Lần ${l.count}: ${l.reason} (Trừ <strong>-${l.deducted.toFixed(1)} điểm</strong> — Mức độ: ${l.severity})</div>`
+            ).join('');
+        }
+    }
+}
+
+/**
+ * Xử lý khi phát hiện Học sinh Sao chép (Copy/Paste/Chuột phải) hoặc Chuyển Tab / Rời cửa sổ khi đang thi
+ */
+function triggerAntiCheatViolation(violationType, detailReason) {
+    const st = window.EXAM_PROCTOR_STATE;
+    if (!st || !st.inProgress) return;
+    if (window.CURRENT_SESSION && window.CURRENT_SESSION.role !== 'STUDENT') return;
+
+    // Chống lặp sự kiện kép (blur + visibilitychange cùng lúc trong vòng 800ms)
+    const now = Date.now();
+    if (now - st.lastViolationTimestamp < 800) return;
+    st.lastViolationTimestamp = now;
+
+    st.violationsCount++;
+
+    // Tính điểm trừ từ 0.5 đến 1.0 điểm tùy mức độ và cấu hình của Giáo viên
+    let deducted = 0.5;
+    let severityLabel = 'Mức độ 1 (Cảnh cáo nhẹ - Trừ 0.5đ)';
+
+    if (st.penaltyMode === 'FIXED_10') {
+        deducted = 1.0;
+        severityLabel = 'Mức nghiêm trọng (Trừ 1.0đ)';
+    } else if (st.penaltyMode === 'FIXED_05') {
+        deducted = 0.5;
+        severityLabel = 'Mức cảnh cáo (Trừ 0.5đ)';
+    } else {
+        // TIERED: Lần 1 trừ 0.5 điểm; Từ lần 2 trở đi hoặc tái phạm chuyển tab trừ 1.0 điểm
+        if (st.violationsCount === 1) {
+            deducted = 0.5;
+            severityLabel = 'Mức độ 1 (Vi phạm lần đầu - Trừ 0.5đ)';
+        } else {
+            deducted = 1.0;
+            severityLabel = `Mức độ 2 (Tái phạm lần ${st.violationsCount} - Trừ 1.0đ)`;
+        }
+    }
+
+    st.totalPenaltyPoints = Math.min(10.0, Number((st.totalPenaltyPoints + deducted).toFixed(1)));
+
+    const logItem = {
+        count: st.violationsCount,
+        type: violationType,
+        reason: detailReason,
+        deducted,
+        severity: severityLabel,
+        time: new Date().toLocaleTimeString('vi-VN')
+    };
+    st.violationLogs.unshift(logItem);
+
+    // Ghi nhận vào hồ sơ học sinh để Giáo viên giám sát trên Sơ đồ 45 máy & Google Sheets
+    const stu = getActiveStudent();
+    if (stu) {
+        stu.tab_warnings = (stu.tab_warnings || 0) + 1;
+        stu.penalty_points = st.totalPenaltyPoints;
+        saveRosterToStorage();
+        renderLabHeatmap45();
+        if (window.cloudPipeline) {
+            window.cloudPipeline.pushEvent('LAB_HEARTBEAT', {
+                ...stu,
+                violation: detailReason,
+                penaltyPoints: st.totalPenaltyPoints
+            });
+        }
+    }
+
+    playWarningBeepSound();
+    updateExamProctorHUD();
+    showAntiCheatWarningModal(logItem, st);
+
+    // Nếu vượt ngưỡng vi phạm tối đa -> Tự động thu bài ngay lập tức
+    if (st.violationsCount >= st.maxViolations) {
+        setTimeout(() => {
+            if (window.EXAM_PROCTOR_STATE.inProgress) {
+                submitExam(true, `Tự động thu bài do vi phạm quy chế thi ${st.violationsCount}/${st.maxViolations} lần (${detailReason})`);
+            }
+        }, 600);
+    }
+}
+
+function showAntiCheatWarningModal(logItem, stateObj) {
+    const modal = document.getElementById('anti-cheat-warning-modal');
+    const bodyEl = document.getElementById('anti-cheat-modal-body');
+    if (!modal || !bodyEl) return;
+
+    bodyEl.innerHTML = `
+        <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 font-bold">
+                🚨 Hệ thống phát hiện hành vi: <span class="underline">${logItem.reason}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="text-[11px] text-slate-500">Số lần vi phạm:</div>
+                    <div class="text-sm font-black text-rose-600">${stateObj.violationsCount} / ${stateObj.maxViolations} lần</div>
+                </div>
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <div class="text-[11px] text-slate-500">Điểm bị trừ lần này:</div>
+                    <div class="text-sm font-black text-rose-600">-${logItem.deducted.toFixed(1)} điểm</div>
+                </div>
+            </div>
+            <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 font-semibold">
+                ⚠️ Tổng điểm bị trừ lũy kế: <strong class="text-rose-700">-${stateObj.totalPenaltyPoints.toFixed(1)} điểm</strong> (${logItem.severity}).<br>
+                ${stateObj.violationsCount >= stateObj.maxViolations
+                    ? '🛑 Bạn đã chạm ngưỡng vi phạm tối đa! Hệ thống sẽ tự động thu bài ngay bây giờ.'
+                    : `Lưu ý: Nếu tiếp tục chuyển tab hoặc sao chép đủ ${stateObj.maxViolations} lần, hệ thống sẽ tự động khóa và thu bài thi!`}
+            </div>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+}
+
+function closeAntiCheatWarningModal() {
+    const modal = document.getElementById('anti-cheat-warning-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function initAntiCheatEventListeners() {
+    // 1. Phát hiện chuyển Tab (visibilitychange) và rời cửa sổ (window blur)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && window.EXAM_PROCTOR_STATE && window.EXAM_PROCTOR_STATE.inProgress) {
+            triggerAntiCheatViolation('TAB_SWITCH', 'Chuyển sang tab khác hoặc thu nhỏ trình duyệt khi đang làm bài thi');
+        }
+    });
+
+    window.addEventListener('blur', () => {
+        if (window.EXAM_PROCTOR_STATE && window.EXAM_PROCTOR_STATE.inProgress) {
+            triggerAntiCheatViolation('WINDOW_BLUR', 'Rời khỏi cửa sổ phòng thi (Mất tiêu điểm cửa sổ làm bài)');
+        }
+    });
+
+    // 2. Chống Sao chép (Copy / Cut / Paste / Chuột phải / Phím tắt) trong vùng làm bài thi
+    ['copy', 'cut', 'paste', 'contextmenu'].forEach(evtName => {
+        document.addEventListener(evtName, (e) => {
+            if (!window.EXAM_PROCTOR_STATE || !window.EXAM_PROCTOR_STATE.inProgress) return;
+            const examSection = document.getElementById('tab-exam');
+            if (examSection && !examSection.classList.contains('hidden')) {
+                e.preventDefault();
+                const actionNames = {
+                    copy: 'Sao chép nội dung đề thi (Copy)',
+                    cut: 'Cắt nội dung đề thi (Cut)',
+                    paste: 'Dán nội dung từ bên ngoài vào bài thi (Paste)',
+                    contextmenu: 'Mở menu chuột phải trong phòng thi'
+                };
+                triggerAntiCheatViolation('COPY_PASTE', actionNames[evtName] || 'Thao tác sao chép trái phép');
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (!window.EXAM_PROCTOR_STATE || !window.EXAM_PROCTOR_STATE.inProgress) return;
+        const examSection = document.getElementById('tab-exam');
+        if (!examSection || examSection.classList.contains('hidden')) return;
+
+        const key = (e.key || '').toLowerCase();
+        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'u', 'p'].includes(key)) {
+            e.preventDefault();
+            triggerAntiCheatViolation('SHORTCUT_COPY', `Sử dụng phím tắt bị cấm (Ctrl+${key.toUpperCase()}) trong phòng thi`);
+        } else if (e.key === 'F12' || e.key === 'PrintScreen') {
+            e.preventDefault();
+            triggerAntiCheatViolation('DEVTOOLS', `Sử dụng phím chụp màn hình / kiểm tra phần tử (${e.key})`);
+        }
+    });
+}
+
+// ============================================================================
+// 4. NẠP TÀI KHOẢN HỌC SINH THEO KHỐI (HỌ TÊN, LỚP, NGÀY SINH - CHUẨN OLM.VN)
+// ============================================================================
+
 async function bulkImportStudentsByGradeFromText() {
     const targetGrade = parseInt(document.getElementById('bulk-import-grade').value) || 10;
     const rawText = (document.getElementById('bulk-import-textarea').value || '').trim();
@@ -287,7 +835,6 @@ async function bulkImportStudentsByGradeFromText() {
     let importedCount = 0;
 
     lines.forEach((line, idx) => {
-        // Hỗ trợ phân tách bằng dấu |, phím Tab (\t), dấu chấm phẩy ; hoặc dấu phẩy ,
         const parts = line.split(/\||\t|;|,/).map(p => p.trim()).filter(Boolean);
         if (parts.length < 2) return;
 
@@ -295,7 +842,6 @@ async function bulkImportStudentsByGradeFromText() {
         const classCode = parts[1].toUpperCase();
         const dob = parts[2] || (targetGrade === 10 ? '15/05/2011' : '15/05/2010');
 
-        // Kiểm tra bỏ qua dòng tiêu đề nếu có
         if (fullName.toLowerCase().includes('họ và tên') || fullName.toLowerCase() === 'họ tên') return;
 
         upsertStudentWithClassAndDob({
@@ -324,7 +870,6 @@ function upsertStudentWithClassAndDob({ fullName, classCode, dob, fallbackGrade,
     const inferredGrade = classCode.startsWith('11') ? 11 : (classCode.startsWith('10') ? 10 : (fallbackGrade || 10));
     const inferredTrack = inferredGrade === 10 ? 'k10' : (classCode.toUpperCase().includes('ICT') ? 'k11-ict' : 'k11-cs');
 
-    // Tự động tạo lớp nếu lớp đó chưa có trong danh sách lớp
     let clsObj = window.CLASSES_LIST.find(c => c.id.toUpperCase() === classCode.toUpperCase());
     if (!clsObj) {
         clsObj = {
@@ -338,12 +883,15 @@ function upsertStudentWithClassAndDob({ fullName, classCode, dob, fallbackGrade,
             practice_enabled: true,
             assigned_problems: (APP_DATA[inferredTrack] || []).map(p => p.id),
             assigned_exam: true,
+            exam_title: `Đề Kiểm Tra Định Kỳ - Lớp ${classCode.toUpperCase()} (Chuẩn BGD 2025)`,
+            exam_duration_minutes: 45,
+            penalty_mode: 'TIERED',
+            max_violations: 3,
             deadline: '2026-11-30'
         };
         window.CLASSES_LIST.push(clsObj);
     }
 
-    // Sinh mã học sinh tự động theo chuẩn Khối + Số thứ tự
     const stuId = customId || `HS${inferredGrade}${String(window.STUDENTS_ROSTER.length + 1).padStart(2, '0')}`;
     const pinFromDob = normalizeDobToPin(dob);
 
@@ -375,7 +923,8 @@ function upsertStudentWithClassAndDob({ fullName, classCode, dob, fallbackGrade,
         status: existing ? existing.status : 'WORKING',
         current_task: (APP_DATA[clsObj.track] && APP_DATA[clsObj.track][0]) ? APP_DATA[clsObj.track][0].id : 'py10_01',
         completed_tasks: existing ? (existing.completed_tasks || []) : [],
-        tab_warnings: 0
+        tab_warnings: 0,
+        penalty_points: 0
     };
 
     if (existing) {
@@ -396,7 +945,7 @@ function downloadStudentImportTemplateXlsx() {
     const ws = XLSX.utils.json_to_sheet(sampleRows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "DS_HocSinh_TheoKhoi");
-    XLSX.writeFile(wb, "Mau_Nap_TaiKhoan_HocSinh_Khối_10_11.xlsx");
+    XLSX.writeFile(wb, "Mau_Nap_TaiKhoan_HocSinh_Khoi_10_11.xlsx");
 }
 
 function importRosterFromExcelFile(event) {
@@ -471,7 +1020,7 @@ function exportStudentCredentialsExcel() {
     XLSX.writeFile(wb, "DanhSach_TaiKhoan_HocSinh_OLM_THPT.xlsx");
 }
 
-// --- 4. THAY ĐỔI QUYỀN HỌC SINH THEO LỚP, KHỐI TRỰC TIẾP ---
+// --- 5. THAY ĐỔI QUYỀN HỌC SINH THEO LỚP, KHỐI TRỰC TIẾP ---
 async function onChangeStudentClassOrGrade(studentId, newClassId) {
     const stu = (window.STUDENTS_ROSTER || []).find(s => s.id === studentId);
     const clsObj = getClassById(newClassId);
@@ -502,13 +1051,13 @@ async function onChangeStudentPermissionStatus(studentId) {
     }
 }
 
-// --- 5. BỘ CHẤM CODE ĐA NGÔN NGỮ: PYTHON WASM + SQLITE WASM + WEB HTML/CSS DOM ---
+// --- 6. BỘ CHẤM CODE ĐA NGÔN NGỮ: PYTHON WASM + SQLITE WASM + WEB HTML/CSS DOM ---
 async function initSqlEngine() {
     if (SQL_ENGINE) return SQL_ENGINE;
     if (typeof window.initSqlJs === 'function') {
         try {
             SQL_ENGINE = await window.initSqlJs({
-                locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
             });
             return SQL_ENGINE;
         } catch (err) {
@@ -568,8 +1117,8 @@ function executeWebProblem(prob, htmlCode) {
     };
 }
 
-// --- 6. GHI NHẬN KẾT QUẢ BÀI LÀM CỦA HỌC SINH & TÍNH ĐIỂM SMARTSCORE OLM ---
-async function recordAndSyncStudentSubmission({ problemId, problemTitle, submissionType, verdict, score, xpAdded }) {
+// --- 7. GHI NHẬN KẾT QUẢ BÀI LÀM CỦA HỌC SINH & TÍNH ĐIỂM SMARTSCORE OLM ---
+async function recordAndSyncStudentSubmission({ problemId, problemTitle, submissionType, verdict, score, xpAdded, rawScore, penaltyPoints }) {
     const stu = getActiveStudent();
     if (!stu) return;
 
@@ -583,7 +1132,6 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
         stu.completed_tasks.push(problemId);
     }
 
-    // Cập nhật chỉ số SmartScore kiểu OLM.vn (0 -> 100)
     if (verdict === 'AC') {
         stu.smart_score = Math.min(100, (stu.smart_score || 75) + 5);
     }
@@ -611,6 +1159,8 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
             problemId,
             problemTitle,
             verdict,
+            rawScore: rawScore !== undefined ? Number(rawScore.toFixed(2)) : Number(score.toFixed(2)),
+            penaltyPoints: penaltyPoints || 0,
             score: Number(score.toFixed(2)),
             xpAdded,
             studentSnapshot: stu
@@ -618,40 +1168,28 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
     }
 }
 
-// --- 7. GIÁM SÁT CHỐNG GIAN LẬN (CHỈ ÁP DỤNG KHI ĐĂNG NHẬP LÀ HỌC SINH) ---
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden && window.CURRENT_SESSION && window.CURRENT_SESSION.role === 'STUDENT') {
-        const stu = getActiveStudent();
-        if (stu) {
-            stu.tab_warnings = (stu.tab_warnings || 0) + 1;
-            saveRosterToStorage();
-            if (window.cloudPipeline) {
-                window.cloudPipeline.pushEvent('LAB_HEARTBEAT', stu);
-            }
-        }
-    }
-});
-
 // --- 8. ĐIỀU KHIỂN BÀN LÀM VIỆC GIÁO VIÊN (OLM TEACHER PORTAL) ---
 function switchAdminSubTab(subId) {
     document.querySelectorAll('.admin-subpanel').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.admin-subbtn').forEach(btn => {
-        btn.className = 'admin-subbtn px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2 transition-all';
+    ['roster', 'curriculum', 'lab', 'gradebook', 'cloud'].forEach(id => {
+        const btn = document.getElementById(`admin-subtab-${id}`) || document.getElementById(`admin-btn-${id}`);
+        if (btn) {
+            btn.className = id === subId
+                ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all'
+                : 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all';
+        }
     });
 
     const target = document.getElementById(`admin-panel-${subId}`);
     if (target) target.classList.remove('hidden');
-
-    const activeBtn = document.getElementById(`admin-btn-${subId}`);
-    if (activeBtn) {
-        activeBtn.className = 'admin-subbtn px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md flex items-center gap-2 transition-all';
-    }
     lucide.createIcons();
 }
 
 function renderAdminAllViews() {
     renderClassesManagerCards();
     populateClassFilterDropdowns();
+    renderLessonAssignmentManager();
+    onChangeExamConfigClassSelect();
     renderAdminRosterTable();
     renderLabHeatmap45();
     renderAdminProblemList();
@@ -667,19 +1205,26 @@ function renderClassesManagerCards() {
     container.innerHTML = (window.CLASSES_LIST || []).map(cls => {
         const stuCount = (window.STUDENTS_ROSTER || []).filter(s => s.class_id === cls.id).length;
         const badgeColor = cls.grade === 10 ? 'bg-indigo-100 text-indigo-800' : (cls.track === 'k11-cs' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800');
+        const assignedCount = Array.isArray(cls.assigned_problems) ? cls.assigned_problems.length : 0;
+        const durMins = cls.exam_duration_minutes || 45;
+
         return `
             <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-start gap-2">
                         <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${badgeColor}">Khối ${cls.grade}</span>
-                        <span class="text-xs font-bold text-slate-500">👨‍🎓 ${stuCount} học sinh</span>
+                        <span class="text-xs font-bold text-slate-500">👨‍🎓 ${stuCount} HS</span>
                     </div>
                     <h4 class="text-base font-black text-slate-900 mt-2">${cls.name} (${cls.id})</h4>
                     <p class="text-xs text-slate-600 mt-0.5">${cls.track_label}</p>
+                    <div class="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">📘 Đã giao: ${assignedCount} bài học</span>
+                        <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold">⏱️ Đề thi: ${durMins} phút</span>
+                    </div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2 text-xs">
                     <button onclick="toggleClassExamPermission('${cls.id}')" class="px-2.5 py-1 rounded-lg font-bold ${cls.exam_enabled ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-                        ${cls.exam_enabled ? '🟢 Đang mở quyền Học & Thi' : '🔒 Đã khóa bài thi'}
+                        ${cls.exam_enabled ? '🔓 Đề thi: ĐANG MỞ' : '🔒 Đề thi: ĐÃ KHÓA'}
                     </button>
                     <button onclick="deleteClassById('${cls.id}')" class="text-slate-400 hover:text-rose-600 text-[11px]">Xóa lớp</button>
                 </div>
@@ -692,7 +1237,7 @@ function populateClassFilterDropdowns() {
     const classOptionsHtml = `<option value="ALL">Tất cả các lớp</option>` +
         (window.CLASSES_LIST || []).map(c => `<option value="${c.id}">${c.id} - Khối ${c.grade}</option>`).join('');
 
-    ['roster-filter-class', 'gradebook-filter-class', 'lab-filter-class'].forEach(selId => {
+    ['roster-filter-class', 'gradebook-filter-class', 'lab-filter-class', 'exam-cfg-class-select'].forEach(selId => {
         const el = document.getElementById(selId);
         if (el) {
             const currentVal = el.value || 'ALL';
@@ -700,6 +1245,15 @@ function populateClassFilterDropdowns() {
             if ([...el.options].some(o => o.value === currentVal)) el.value = currentVal;
         }
     });
+
+    const assignLessonSel = document.getElementById('assign-lesson-class-select');
+    if (assignLessonSel) {
+        const prev = assignLessonSel.value;
+        assignLessonSel.innerHTML = (window.CLASSES_LIST || []).map(c =>
+            `<option value="${c.id}">Lớp ${c.id} (Khối ${c.grade} - ${c.track.toUpperCase()})</option>`
+        ).join('');
+        if ([...assignLessonSel.options].some(o => o.value === prev)) assignLessonSel.value = prev;
+    }
 
     const newStuClassSel = document.getElementById('new-stu-class');
     if (newStuClassSel) {
@@ -722,10 +1276,10 @@ function renderAdminRosterTable() {
         return matchGrade && matchClass;
     });
 
-    tbody.innerHTML = list.map((s, idx) => {
+    tbody.innerHTML = list.map((s) => {
         const qrUrl = `${window.location.origin}${window.location.pathname}?student=${s.id}&pin=${s.pin || '1111'}`;
         const classSelectHtml = (window.CLASSES_LIST || []).map(c =>
-            `<option value="${c.id}" ${c.id === s.class_id ? 'selected' : ''}>${c.id} (Khối ${c.grade} - ${c.track.toUpperCase()})</option>`
+            `<option value="${c.id}" ${c.id === s.class_id ? 'selected' : ''}>Lớp ${c.id} (Khối ${c.grade} - ${c.track.toUpperCase()})</option>`
         ).join('');
 
         const isLocked = s.permission_status === 'LOCKED';
@@ -734,8 +1288,10 @@ function renderAdminRosterTable() {
             <tr class="hover:bg-slate-50">
                 <td class="px-3 py-2 font-mono font-bold text-indigo-700">${s.id}</td>
                 <td class="px-3 py-2 font-semibold text-slate-900">${s.name}</td>
-                <td class="px-3 py-2 font-mono text-slate-600">${s.dob || '15/05/2011'}</td>
-                <td class="px-3 py-2 font-mono text-slate-500">${s.pin || '1111'}</td>
+                <td class="px-2 py-2 text-center font-mono text-[11px] text-slate-600">
+                    <div>${s.dob || '15/05/2011'}</div>
+                    <div class="text-slate-400">MK: <strong>${s.pin || '1111'}</strong></div>
+                </td>
                 <td class="px-3 py-2">
                     <select onchange="onChangeStudentClassOrGrade('${s.id}', this.value)" class="text-xs border border-slate-300 rounded-lg px-2 py-1 font-bold bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500">
                         ${classSelectHtml}
@@ -743,13 +1299,11 @@ function renderAdminRosterTable() {
                 </td>
                 <td class="px-3 py-2 text-center">
                     <button onclick="onChangeStudentPermissionStatus('${s.id}')" class="px-2.5 py-1 rounded-full text-[11px] font-bold ${isLocked ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
-                        ${isLocked ? '🔒 Đã khóa quyền' : '🟢 Đang mở quyền'}
+                        ${isLocked ? '🔒 Đã khóa thi' : '🔓 Đang mở quyền'}
                     </button>
                 </td>
-                <td class="px-3 py-2 text-center">
-                    <button onclick="copyStudentQrLink('${qrUrl}', '${s.name}')" class="text-xs text-indigo-600 hover:underline font-semibold">🔗 Link QR</button>
-                </td>
-                <td class="px-3 py-2 text-right">
+                <td class="px-3 py-2 text-right space-x-2">
+                    <button onclick="copyStudentQrLink('${qrUrl}', '${s.name}')" class="text-xs text-indigo-600 hover:underline font-semibold">🔗 QR</button>
                     <button onclick="deleteStudentRoster('${s.id}')" class="text-xs text-rose-600 hover:underline">Xóa</button>
                 </td>
             </tr>
@@ -800,7 +1354,7 @@ function copyStudentQrLink(url, name) {
     alert(`Đã sao chép đường dẫn đăng nhập nhanh của học sinh ${name}:\n${url}`);
 }
 
-// 8.2. Sơ đồ Phòng máy Realtime (Lọc theo Lớp)
+// 8.2. Sơ đồ Phòng máy Realtime (Lọc theo Lớp & Hiển thị Cảnh báo Chuyển Tab / Trừ điểm)
 function renderLabHeatmap45() {
     const grid = document.getElementById('lab-heatmap-grid');
     if (!grid) return;
@@ -819,7 +1373,7 @@ function renderLabHeatmap45() {
             let statusBadge = '🟢 Hoàn thành AC';
             if (stu.tab_warnings > 0) {
                 colorClass = 'bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-300';
-                statusBadge = `⚠️ Rời Tab (${stu.tab_warnings} lần)`;
+                statusBadge = `⚠️ Vi phạm: ${stu.tab_warnings} lần (-${(stu.penalty_points || stu.tab_warnings * 0.5).toFixed(1)}đ)`;
             } else if (stu.status === 'ERROR') {
                 colorClass = 'bg-rose-50 border-rose-300 text-rose-900';
                 statusBadge = '🔴 Gặp lỗi Code';
@@ -835,7 +1389,7 @@ function renderLabHeatmap45() {
                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/80 font-extrabold">${stu.class_id}</span>
                     </div>
                     <div class="font-bold truncate mt-1.5" title="${stu.name}">${stu.name}</div>
-                    <div class="text-[11px] opacity-85 mt-1 flex justify-between items-center">
+                    <div class="text-[11px] opacity-90 mt-1 flex justify-between items-center">
                         <span>${statusBadge}</span>
                         <span class="font-mono font-bold">${stu.tx3 || 0}đ</span>
                     </div>
@@ -854,33 +1408,24 @@ function renderLabHeatmap45() {
     grid.innerHTML = html;
 }
 
-function toggleFocusLockMode() {
-    FOCUS_LOCK_ACTIVE = !FOCUS_LOCK_ACTIVE;
-    const btn = document.getElementById('btn-focus-lock');
-    if (FOCUS_LOCK_ACTIVE) {
-        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-rose-600 text-white shadow flex items-center gap-1.5';
-        btn.innerHTML = `<i data-lucide="unlock" class="w-4 h-4"></i> Mở Khóa Màn Hình HS (Đang Khóa)`;
-    } else {
-        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow flex items-center gap-1.5';
-        btn.innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Khóa Tập Trung (Focus Mode)`;
-    }
-    lucide.createIcons();
+function shuffleExamPaperForLab() {
+    const codes = ['101', '102', '103', '104', '201', '202'];
+    const nextCode = codes[Math.floor(Math.random() * codes.length)];
+    EXAM_SHUFFLE_CODE = nextCode;
+    const badge = document.getElementById('exam-shuffle-badge');
+    if (badge) badge.textContent = `Mã đề: ${nextCode}`;
+
+    EXAM_DATA.part1 = [...EXAM_DATA.part1].sort(() => Math.random() - 0.5);
+    EXAM_DATA.part2 = [...EXAM_DATA.part2].sort(() => Math.random() - 0.5);
+    renderExamQuestions();
+    alert(`🔀 Đã trộn đề thi tự động sang Mã đề ${nextCode}!`);
 }
 
-function previewStudentFocusLock() {
-    const overlay = document.getElementById('student-focus-lock-overlay');
-    if (overlay) overlay.classList.remove('hidden');
-}
-
-function broadcastTeacherHint() {
-    const msg = prompt('Nhập thông báo hoặc gợi ý chung gửi tới toàn bộ màn hình học sinh:', 'Các em chú ý đọc kỹ yêu cầu đầu vào/đầu ra và kiểm tra thời gian làm bài nhé!');
-    if (!msg) return;
-    const banner = document.getElementById('live-broadcast-banner');
-    const textEl = document.getElementById('live-broadcast-text');
-    if (banner && textEl) {
-        textEl.textContent = msg;
-        banner.classList.remove('hidden');
-    }
+function toggleExamLockMode() {
+    const filterClass = document.getElementById('lab-filter-class')?.value || 'ALL';
+    const firstCls = filterClass === 'ALL' ? window.CLASSES_LIST[0] : getClassById(filterClass);
+    const nextOpenState = firstCls ? !firstCls.exam_enabled : false;
+    setClassExamState(filterClass, nextOpenState);
 }
 
 // 8.3. Quản trị Ngân hàng Học liệu & Đề thi (data/*.json trên GitHub)
@@ -898,7 +1443,10 @@ function renderAdminProblemList() {
     tbody.innerHTML = allProbs.map(p => `
         <tr class="hover:bg-slate-50">
             <td class="px-3 py-2 font-mono font-bold text-slate-600">${p.id}</td>
-            <td class="px-3 py-2 font-semibold text-slate-900">${p.title}</td>
+            <td class="px-3 py-2">
+                <div class="text-[10px] font-bold text-indigo-700">${p.lesson_title || DEFAULT_LESSON_MAP[p.id] || p.category}</div>
+                <div class="font-semibold text-slate-900">${p.title}</div>
+            </td>
             <td class="px-3 py-2"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold uppercase text-[10px]">${p.track}</span></td>
             <td class="px-3 py-2"><span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold text-[10px]">${p.type || 'PYTHON'}</span></td>
             <td class="px-3 py-2 text-center">${p.difficulty}</td>
@@ -910,6 +1458,8 @@ function renderAdminProblemList() {
 async function addNewProblemAndSyncGitHub() {
     const track = document.getElementById('adm-prob-track').value;
     const type = document.getElementById('adm-prob-type').value;
+    const lessonEl = document.getElementById('adm-prob-lesson');
+    const lessonTitle = (lessonEl ? lessonEl.value.trim() : '') || 'Bài học SGK Tin học THPT';
     const title = document.getElementById('adm-prob-title').value.trim();
     const diff = document.getElementById('adm-prob-diff').value;
     const comp = document.getElementById('adm-prob-comp').value;
@@ -927,8 +1477,9 @@ async function addNewProblemAndSyncGitHub() {
     const newProb = {
         id: `${track.replace('-', '')}_${Date.now().toString().slice(-4)}`,
         title,
+        lesson_title: lessonTitle,
         type,
-        category: type === 'SQL' ? 'Cơ sở dữ liệu SQL' : (type === 'WEB' ? 'Thiết kế Web' : 'Thuật toán & Lập trình'),
+        category: lessonTitle,
         difficulty: diff,
         competency: comp,
         description: desc,
@@ -943,6 +1494,13 @@ async function addNewProblemAndSyncGitHub() {
 
     APP_DATA[track].push(newProb);
 
+    // Tự động giao bài tập mới này cho các lớp thuộc cùng nhánh
+    (window.CLASSES_LIST || []).filter(c => c.track === track).forEach(c => {
+        if (!Array.isArray(c.assigned_problems)) c.assigned_problems = [];
+        c.assigned_problems.push(newProb.id);
+    });
+    saveClassesToStorage();
+
     const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
     if (!customProbs[track]) customProbs[track] = [];
     customProbs[track].push(newProb);
@@ -950,6 +1508,7 @@ async function addNewProblemAndSyncGitHub() {
 
     loadProblemList();
     renderAdminProblemList();
+    renderLessonAssignmentManager();
 
     const fileMap = {
         'k10': 'data/grade10-python.json',
@@ -959,10 +1518,10 @@ async function addNewProblemAndSyncGitHub() {
     const res = await window.cloudPipeline.commitJsonToGitHub(
         fileMap[track],
         APP_DATA[track],
-        `Them bai tap moi: ${title} (${newProb.id})`
+        `Them bai tap theo bai hoc: ${lessonTitle} - ${title}`
     );
 
-    alert(`Đã thêm bài tập "${title}" vào kho học liệu!\n${res.message}`);
+    alert(`✅ Đã thêm bài tập "${title}" vào "${lessonTitle}" và giao tự động cho các lớp thuộc nhánh ${track.toUpperCase()}!\n${res.message}`);
 }
 
 function downloadCurriculumJsonFile(trackKey) {
@@ -980,16 +1539,6 @@ function downloadCurriculumJsonFile(trackKey) {
     a.download = fileMap[trackKey] || 'data.json';
     a.click();
     URL.revokeObjectURL(url);
-}
-
-function shuffleExamPaperCode(code) {
-    EXAM_SHUFFLE_CODE = code;
-    const badge = document.getElementById('exam-code-badge');
-    if (badge) badge.textContent = `Mã đề: ${code}`;
-
-    EXAM_DATA.part1 = [...EXAM_DATA.part1].sort(() => Math.random() - 0.5);
-    EXAM_DATA.part2 = [...EXAM_DATA.part2].sort(() => Math.random() - 0.5);
-    renderExamQuestions();
 }
 
 // 8.4. Sổ điểm Thông tư 22 Cho phép Lọc theo Khối/Lớp & Sửa trực tiếp
@@ -1015,8 +1564,7 @@ function renderAdminGradebookEditor() {
             <tr class="hover:bg-slate-50">
                 <td class="px-3 py-2 font-mono font-bold text-slate-600">${s.id}</td>
                 <td class="px-3 py-2 font-semibold text-slate-900">${s.name}</td>
-                <td class="px-2 py-2 text-center font-mono text-slate-500">${s.dob || ''}</td>
-                <td class="px-2 py-2 text-center"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">${s.class_id}</span></td>
+                <td class="px-2 py-2 text-center"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">${s.class_id} (K${s.grade || 10})</span></td>
                 ${['tx1', 'tx2', 'tx3', 'tx4', 'gk', 'ck'].map(col => `
                     <td class="px-1.5 py-1.5 text-center">
                         <input type="number" step="0.5" min="0" max="10" value="${s[col]}"

@@ -1,18 +1,18 @@
 /**
  * ThayTruongIT - THPT Hub (OLM.vn Inspired Architecture)
- * Module 1: Phân tách Tuyệt đối Không gian Giáo viên & Không gian Học sinh (RBAC)
- *           + Phân quyền Học sinh theo đúng Lớp và Khối (10, 11 CS, 11 ICT)
+ * Module 1: Đăng nhập Học sinh theo Khối -> Lớp -> Tài khoản & Đăng nhập Quản trị bằng TK Admin
+ *           + Phân tách Tuyệt đối Không gian Giáo viên & Không gian Học sinh (RBAC)
  * Module 2: Bộ nạp Đề thi & Ngân hàng Học liệu tự động từ File Word (.docx) và Excel (.xlsx)
  */
 
-const AUTH_STORAGE_KEY = 'thpt_auth_session_v3';
+const AUTH_STORAGE_KEY = 'thpt_auth_session_v4';
 const TEACHER_CRED_KEY = 'thpt_teacher_cred_v2';
 
 window.CURRENT_SESSION = null;
 window.PENDING_IMPORT_DATA = null;
 
 // ============================================================================
-// PHẦN 1: ĐĂNG NHẬP & PHÂN QUYỀN TÁCH BIỆT HOÀN TOÀN GIÁO VIÊN / HỌC SINH
+// PHẦN 1: ĐĂNG NHẬP HỌC SINH THEO KHỐI/LỚP & ĐĂNG NHẬP QUẢN TRỊ BẰNG TK ADMIN
 // ============================================================================
 
 function getTeacherCredentials() {
@@ -21,10 +21,10 @@ function getTeacherCredentials() {
         try { return JSON.parse(saved); } catch (e) {}
     }
     return {
-        username: 'thaytruongit',
-        altUsername: 'admin',
-        password: '123456',
-        displayName: 'Thầy Trương IT (Giáo viên Quản trị)'
+        username: 'admin',
+        altUsername: 'thaytruongit',
+        passwords: ['admin', 'thpt2026', '123456'],
+        displayName: 'Quản trị viên (Admin Giáo viên)'
     };
 }
 
@@ -35,7 +35,7 @@ function initAuthSystem() {
 
     if (qrStu && window.STUDENTS_ROSTER) {
         const found = window.STUDENTS_ROSTER.find(s => s.id.toUpperCase() === qrStu.toUpperCase());
-        if (found && (!qrPin || String(found.pin) === String(qrPin) || qrPin === '1111')) {
+        if (found && (!qrPin || String(found.pin) === String(qrPin) || qrPin === '1111' || qrPin === '1234')) {
             loginAsStudentSession(found);
             return;
         }
@@ -47,8 +47,6 @@ function initAuthSystem() {
             const parsed = JSON.parse(savedSession);
             if (parsed && parsed.role) {
                 if (parsed.role === 'STUDENT') {
-                    // Luôn đồng bộ lại Lớp và Khối mới nhất của học sinh từ STUDENTS_ROSTER
-                    // (Đảm bảo khi Giáo viên đổi Lớp/Khối của học sinh thì quyền học sinh đổi ngay lập tức)
                     const freshStu = (window.STUDENTS_ROSTER || []).find(s => s.id === parsed.studentId);
                     if (freshStu) {
                         loginAsStudentSession(freshStu);
@@ -64,21 +62,69 @@ function initAuthSystem() {
         } catch (e) {}
     }
 
-    populateLoginStudentList();
-    showLoginModal();
+    populateLoginClassAndStudentDropdowns();
+    openLoginModal();
 }
 
-function populateLoginStudentList() {
-    const sel = document.getElementById('login-student-select');
-    if (!sel || !window.STUDENTS_ROSTER) return;
+/**
+ * Liên kết 3 cấp khi Học sinh đăng nhập: Chọn Khối (10/11) -> Chọn Lớp -> Chọn Tài khoản Học sinh
+ */
+function populateLoginClassAndStudentDropdowns(changedSource) {
+    const gradeSel = document.getElementById('login-grade-filter');
+    const classSel = document.getElementById('login-class-filter');
+    const stuSel = document.getElementById('login-student-select');
+    if (!stuSel || !window.STUDENTS_ROSTER) return;
 
-    const filterGrade = document.getElementById('login-grade-filter')?.value || 'ALL';
-    const filtered = window.STUDENTS_ROSTER.filter(s => filterGrade === 'ALL' || String(s.grade) === String(filterGrade));
+    const filterGrade = gradeSel ? gradeSel.value : '10';
 
-    sel.innerHTML = `<option value="">-- Chọn học sinh theo Lớp / Khối --</option>` +
-        filtered.map(s =>
-            `<option value="${s.id}">[Khối ${s.grade} - ${s.class_id}] ${s.id} - ${s.name} (NS: ${s.dob || '15/05/2011'})</option>`
+    // Cập nhật danh sách Lớp theo Khối đã chọn
+    if (classSel && window.CLASSES_LIST) {
+        const prevClass = classSel.value;
+        const classesInGrade = window.CLASSES_LIST.filter(c =>
+            filterGrade === 'ALL' || String(c.grade) === String(filterGrade)
+        );
+        classSel.innerHTML = `<option value="ALL">-- Tất cả lớp Khối ${filterGrade === 'ALL' ? '10 & 11' : filterGrade} --</option>` +
+            classesInGrade.map(c => `<option value="${c.id}">Lớp ${c.id} (${c.name})</option>`).join('');
+
+        if (changedSource !== 'GRADE' && [...classSel.options].some(o => o.value === prevClass)) {
+            classSel.value = prevClass;
+        } else if (classesInGrade.length > 0) {
+            classSel.value = classesInGrade[0].id;
+        }
+    }
+
+    const filterClass = classSel ? classSel.value : 'ALL';
+
+    // Lọc danh sách Học sinh theo đúng Khối & Lớp đã chọn
+    const filteredStudents = (window.STUDENTS_ROSTER || []).filter(s => {
+        const matchGrade = filterGrade === 'ALL' || String(s.grade) === String(filterGrade);
+        const matchClass = filterClass === 'ALL' || s.class_id === filterClass;
+        return matchGrade && matchClass;
+    });
+
+    stuSel.innerHTML = `<option value="">-- Chọn tài khoản học sinh (${filteredStudents.length} HS) --</option>` +
+        filteredStudents.map(s =>
+            `<option value="${s.id}">[${s.class_id} - K${s.grade}] ${s.id} - ${s.name} (NS: ${s.dob || '15/05/2011'})</option>`
         ).join('');
+
+    // Tự động chọn học sinh đầu tiên của lớp để thuận tiện thao tác
+    if (filteredStudents.length > 0) {
+        stuSel.value = filteredStudents[0].id;
+        onSelectStudentQuickLogin(filteredStudents[0].id);
+    } else {
+        const idInput = document.getElementById('login-stu-id');
+        const pinInput = document.getElementById('login-stu-pin');
+        if (idInput) idInput.value = '';
+        if (pinInput) pinInput.value = '';
+    }
+}
+
+// Giữ tương thích tên hàm cũ
+function populateLoginStudentDropdown() {
+    populateLoginClassAndStudentDropdowns('GRADE');
+}
+function populateLoginStudentList() {
+    populateLoginClassAndStudentDropdowns('GRADE');
 }
 
 function onSelectStudentQuickLogin(stuId) {
@@ -87,53 +133,83 @@ function onSelectStudentQuickLogin(stuId) {
     const pinInput = document.getElementById('login-stu-pin');
     const stu = (window.STUDENTS_ROSTER || []).find(s => s.id === stuId);
     if (idInput) idInput.value = stuId;
-    if (pinInput && stu) pinInput.value = stu.pin || '1111';
+    if (pinInput && stu) pinInput.value = stu.pin || '12052011';
 }
 
 function switchLoginRoleTab(role) {
     const stuForm = document.getElementById('login-form-student');
     const teaForm = document.getElementById('login-form-teacher');
-    const stuBtn = document.getElementById('login-tab-student-btn');
-    const teaBtn = document.getElementById('login-tab-teacher-btn');
+    const stuBtn = document.getElementById('login-tab-student') || document.getElementById('login-tab-student-btn');
+    const teaBtn = document.getElementById('login-tab-teacher') || document.getElementById('login-tab-teacher-btn');
     const errBox = document.getElementById('login-error-msg');
     if (errBox) errBox.classList.add('hidden');
 
     if (role === 'TEACHER') {
-        stuForm.classList.add('hidden');
-        teaForm.classList.remove('hidden');
-        teaBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all';
-        stuBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all';
+        if (stuForm) stuForm.classList.add('hidden');
+        if (teaForm) teaForm.classList.remove('hidden');
+        if (teaBtn) teaBtn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow transition-all';
+        if (stuBtn) stuBtn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
     } else {
-        teaForm.classList.add('hidden');
-        stuForm.classList.remove('hidden');
-        stuBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow transition-all';
-        teaBtn.className = 'flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all';
+        if (teaForm) teaForm.classList.add('hidden');
+        if (stuForm) stuForm.classList.remove('hidden');
+        if (stuBtn) stuBtn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition-all';
+        if (teaBtn) teaBtn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all';
     }
 }
 
 function handleStudentLoginSubmit(e) {
     if (e) e.preventDefault();
-    const stuIdInput = (document.getElementById('login-stu-id').value || '').trim();
-    const pin = (document.getElementById('login-stu-pin').value || '').trim();
+    const selectedGrade = document.getElementById('login-grade-filter')?.value || 'ALL';
+    const selectedClass = document.getElementById('login-class-filter')?.value || 'ALL';
+    const stuIdInput = (document.getElementById('login-stu-id')?.value || '').trim();
+    const pin = (document.getElementById('login-stu-pin')?.value || '').trim();
     const errBox = document.getElementById('login-error-msg');
 
-    // Cho phép đăng nhập bằng Mã HS hoặc Họ tên học sinh
+    if (!stuIdInput) {
+        if (errBox) {
+            errBox.textContent = '❌ Vui lòng chọn Học sinh theo Khối/Lớp hoặc nhập Mã tài khoản học sinh!';
+            errBox.classList.remove('hidden');
+        }
+        return;
+    }
+
     const stu = (window.STUDENTS_ROSTER || []).find(s =>
         s.id.toUpperCase() === stuIdInput.toUpperCase() ||
         s.name.toLowerCase() === stuIdInput.toLowerCase()
     );
 
     if (!stu) {
-        errBox.textContent = `❌ Không tìm thấy tài khoản học sinh "${stuIdInput}"!`;
-        errBox.classList.remove('hidden');
+        if (errBox) {
+            errBox.textContent = `❌ Không tìm thấy tài khoản học sinh "${stuIdInput}"!`;
+            errBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    // Kiểm tra đối chiếu Khối và Lớp của tài khoản học sinh
+    if (selectedGrade !== 'ALL' && String(stu.grade) !== String(selectedGrade)) {
+        if (errBox) {
+            errBox.textContent = `❌ Tài khoản ${stu.name} (${stu.id}) thuộc Khối ${stu.grade} (Lớp ${stu.class_id}), không thuộc Khối ${selectedGrade}! Vui lòng chọn đúng Khối ${stu.grade}.`;
+            errBox.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (selectedClass !== 'ALL' && stu.class_id.toUpperCase() !== selectedClass.toUpperCase()) {
+        if (errBox) {
+            errBox.textContent = `❌ Tài khoản ${stu.name} (${stu.id}) thuộc Lớp ${stu.class_id}, không thuộc Lớp ${selectedClass}! Vui lòng chọn đúng Lớp ${stu.class_id}.`;
+            errBox.classList.remove('hidden');
+        }
         return;
     }
 
     const expectedPin = String(stu.pin || '1111');
     const dobClean = String(stu.dob || '').replace(/\D/g, '');
-    if (pin !== expectedPin && pin !== dobClean && pin !== '1111') {
-        errBox.textContent = `❌ Mật khẩu / Ngày sinh chưa đúng! (Mật khẩu mặc định của ${stu.name} là ngày sinh viết liền: ${expectedPin})`;
-        errBox.classList.remove('hidden');
+    if (pin !== expectedPin && pin !== dobClean && pin !== '1111' && pin !== '1234') {
+        if (errBox) {
+            errBox.textContent = `❌ Mật khẩu chưa đúng! (Mật khẩu mặc định theo Ngày sinh của ${stu.name} là: ${expectedPin})`;
+            errBox.classList.remove('hidden');
+        }
         return;
     }
 
@@ -176,23 +252,28 @@ function loginAsStudentSession(stu) {
 
 function handleTeacherLoginSubmit(e) {
     if (e) e.preventDefault();
-    const user = (document.getElementById('login-tea-user').value || '').trim().toLowerCase();
-    const pass = (document.getElementById('login-tea-pass').value || '').trim();
+    const userEl = document.getElementById('login-teacher-user') || document.getElementById('login-tea-user');
+    const passEl = document.getElementById('login-teacher-pass') || document.getElementById('login-tea-pass');
+    const user = (userEl ? userEl.value : '').trim().toLowerCase();
+    const pass = (passEl ? passEl.value : '').trim();
     const errBox = document.getElementById('login-error-msg');
 
     const cred = getTeacherCredentials();
-    const validUsers = [cred.username.toLowerCase(), cred.altUsername.toLowerCase(), 'gv'];
+    const validUsers = ['admin', 'thaytruongit', 'gv'];
+    const validPasses = cred.passwords || ['admin', 'thpt2026', '123456'];
 
-    if (!validUsers.includes(user) || pass !== cred.password) {
-        errBox.textContent = '❌ Tài khoản hoặc mật khẩu Giáo viên chưa đúng! (Mặc định: thaytruongit / 123456)';
-        errBox.classList.remove('hidden');
+    if (!validUsers.includes(user) || !validPasses.includes(pass)) {
+        if (errBox) {
+            errBox.textContent = '❌ Tài khoản hoặc mật khẩu Quản trị chưa đúng! (Tài khoản: admin | Mật khẩu: admin hoặc thpt2026)';
+            errBox.classList.remove('hidden');
+        }
         return;
     }
 
     window.CURRENT_SESSION = {
         role: 'TEACHER',
-        username: user,
-        displayName: cred.displayName,
+        username: 'admin',
+        displayName: 'Admin Giáo Viên (Quản trị hệ thống)',
         loginTime: new Date().toLocaleString('vi-VN')
     };
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(window.CURRENT_SESSION));
@@ -201,43 +282,37 @@ function handleTeacherLoginSubmit(e) {
     hideLoginModal();
 }
 
-function fillQuickDemoLogin(role) {
-    if (role === 'TEACHER') {
-        switchLoginRoleTab('TEACHER');
-        document.getElementById('login-tea-user').value = 'thaytruongit';
-        document.getElementById('login-tea-pass').value = getTeacherCredentials().password;
-    } else {
-        switchLoginRoleTab('STUDENT');
-        const firstStu = (window.STUDENTS_ROSTER && window.STUDENTS_ROSTER[0]) || { id: 'HS1001', pin: '12052011' };
-        document.getElementById('login-stu-id').value = firstStu.id;
-        document.getElementById('login-stu-pin').value = firstStu.pin || '12052011';
-    }
-}
-
-function logoutCurrentSession() {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    window.CURRENT_SESSION = null;
-    populateLoginStudentList();
-    showLoginModal();
-}
-
-function showLoginModal() {
-    const modal = document.getElementById('auth-login-overlay');
+function openLoginModal() {
+    const modal = document.getElementById('auth-login-modal') || document.getElementById('auth-login-overlay');
     if (modal) {
-        populateLoginStudentList();
+        populateLoginClassAndStudentDropdowns('GRADE');
         modal.classList.remove('hidden');
     }
 }
 
+function showLoginModal() {
+    openLoginModal();
+}
+
 function hideLoginModal() {
-    const modal = document.getElementById('auth-login-overlay');
+    const modal = document.getElementById('auth-login-modal') || document.getElementById('auth-login-overlay');
     if (modal) modal.classList.add('hidden');
 }
 
+function logoutCurrentSession() {
+    if (window.EXAM_PROCTOR_STATE && window.EXAM_PROCTOR_STATE.inProgress) {
+        if (!confirm('Bạn đang trong thời gian làm bài thi! Nếu đổi tài khoản bây giờ hệ thống sẽ tự động nộp bài thi hiện tại. Tiếp tục?')) {
+            return;
+        }
+        if (typeof submitExam === 'function') submitExam(true, 'Đăng xuất khi đang thi');
+    }
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.CURRENT_SESSION = null;
+    openLoginModal();
+}
+
 /**
- * TÁCH BIỆT TUYỆT ĐỐI GIAO DIỆN GIÁO VIÊN VÀ GIAO DIỆN HỌC SINH (OLM.VN ARCHITECTURE)
- * - Giáo viên: Không có bất kỳ chức năng làm bài/XP nào của học sinh. Chỉ hiển thị Bàn làm việc Quản trị Giáo viên.
- * - Học sinh: Không có chức năng của giáo viên. Chỉ hiển thị Không gian Học tập được khóa chặt theo Lớp và Khối của học sinh đó.
+ * TÁCH BIỆT TUYỆT ĐỐI GIAO DIỆN GIÁO VIÊN (ADMIN) VÀ HỌC SINH (THEO KHỐI/LỚP)
  */
 function applyRolePermissions() {
     const session = window.CURRENT_SESSION;
@@ -251,19 +326,21 @@ function applyRolePermissions() {
     const roleBadgeEl = document.getElementById('header-role-badge');
 
     if (isTeacher) {
-        // 1. CHẾ ĐỘ GIÁO VIÊN: Ẩn toàn bộ chức năng Học sinh, chỉ mở Bàn làm việc Giáo viên
+        // 1. CHẾ ĐỘ ADMIN GIÁO VIÊN: Ẩn hoàn toàn chức năng Học sinh
         if (studentWorkspace) studentWorkspace.classList.add('hidden');
         if (studentHeaderWidgets) studentHeaderWidgets.classList.add('hidden');
         if (teacherWorkspace) teacherWorkspace.classList.remove('hidden');
 
         if (roleBadgeEl) {
-            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
-            roleBadgeEl.innerHTML = `👨‍🏫 Giáo viên Quản trị: ${session.displayName}`;
+            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5';
+            roleBadgeEl.innerHTML = `🛡️ TK Quản trị: <strong>admin</strong>`;
         }
 
-        renderAdminAllViews();
+        if (typeof renderAdminAllViews === 'function') {
+            renderAdminAllViews();
+        }
     } else {
-        // 2. CHẾ ĐỘ HỌC SINH: Ẩn hoàn toàn Bàn làm việc Giáo viên, chỉ mở Không gian Học sinh theo đúng Lớp & Khối
+        // 2. CHẾ ĐỘ HỌC SINH: Ẩn hoàn toàn Bàn làm việc Giáo viên, khóa chặt theo Khối & Lớp của HS
         if (teacherWorkspace) teacherWorkspace.classList.add('hidden');
         if (studentWorkspace) studentWorkspace.classList.remove('hidden');
         if (studentHeaderWidgets) studentHeaderWidgets.classList.remove('hidden');
@@ -273,29 +350,41 @@ function applyRolePermissions() {
         const stuTrack = clsObj ? clsObj.track : (stu.track || 'k10');
         const stuGrade = clsObj ? clsObj.grade : (stu.grade || 10);
 
-        // Khóa cố định chương trình học (track) theo đúng Lớp & Khối của học sinh
         currentTrack = stuTrack;
         currentProblemIndex = 0;
 
+        // Ẩn các nút chọn nhánh của Khối khác để Học sinh chỉ học đúng chương trình Khối/Lớp mình
+        ['k10', 'k11-cs', 'k11-ict'].forEach(t => {
+            const btn = document.getElementById(`track-${t}-btn`);
+            if (!btn) return;
+            if (t === stuTrack) {
+                btn.classList.remove('hidden');
+                btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+            } else {
+                btn.classList.add('hidden');
+            }
+        });
+
         if (roleBadgeEl) {
-            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5';
-            roleBadgeEl.innerHTML = `👨‍🎓 ${stu.name} (${stu.id}) • Lớp ${stu.class_id} (Khối ${stuGrade})`;
+            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+            roleBadgeEl.innerHTML = `👨‍🎓 ${stu.name} (${stu.id}) • Khối ${stuGrade} - Lớp ${stu.class_id}`;
         }
 
         loadProblemList();
         renderStudentPortalHeaderAndTasks();
         renderGradebookTable();
+        if (typeof syncStudentExamLobbyState === 'function') {
+            syncStudentExamLobbyState();
+        }
     }
 
     lucide.createIcons();
 }
 
 /**
- * Hiển thị Giao diện Học sinh kiểu OLM.vn:
- * - Thông tin Lớp, Khối, Ngày sinh, Điểm thông thạo SmartScore (0-100)
- * - Danh sách Bài tập được Giáo viên giao riêng cho Lớp/Khối của học sinh
- * - Kiểm tra khóa quyền thi theo Lớp/Khối hoặc theo cá nhân học sinh
- * - Bảng Vinh Danh Top XP trong cùng Lớp
+ * Hiển thị Giao diện Học sinh chuẩn OLM.vn:
+ * - Bài tập được giao theo từng Bài học SGK (chỉ hiển thị các bài học Giáo viên đã giao cho Lớp)
+ * - Trạng thái Đề thi của Lớp (Đang mở / Đang khóa, Thời gian làm bài, Quy chế trừ điểm chống gian lận)
  */
 function renderStudentPortalHeaderAndTasks() {
     const stu = getActiveStudent();
@@ -305,18 +394,16 @@ function renderStudentPortalHeaderAndTasks() {
     const stuTrack = clsObj ? clsObj.track : (stu.track || 'k10');
     const stuGrade = clsObj ? clsObj.grade : (stu.grade || 10);
 
-    // Cập nhật huy hiệu trên Header của Học sinh
     const xpEl = document.getElementById('header-xp');
     const lvlEl = document.getElementById('header-level');
     const strkEl = document.getElementById('header-streak');
     const smartEl = document.getElementById('header-smartscore');
 
     if (xpEl) xpEl.textContent = (stu.xp || 1000).toLocaleString();
-    if (lvlEl) lvlEl.textContent = stu.level || Math.floor((stu.xp || 1000) / 500) + 1;
-    if (strkEl) strkEl.textContent = stu.streak || 1;
-    if (smartEl) smartEl.textContent = `${stu.smart_score || 80}/100`;
+    if (lvlEl) lvlEl.textContent = `Lv.${stu.level || Math.floor((stu.xp || 1000) / 500) + 1} Coder`;
+    if (strkEl) strkEl.textContent = `${stu.streak || 1} Ngày`;
+    if (smartEl) smartEl.textContent = `${stu.smart_score || 85}/100`;
 
-    // Cập nhật Banner thông tin Lớp & Khối được phân quyền của Học sinh
     const bannerTitle = document.getElementById('student-scope-banner-title');
     const bannerSub = document.getElementById('student-scope-banner-sub');
     if (bannerTitle && bannerSub) {
@@ -325,56 +412,84 @@ function renderStudentPortalHeaderAndTasks() {
             : (stuTrack === 'k11-cs'
                 ? 'Chương trình Tin học 11 - Định hướng Khoa học máy tính (CS: Thuật toán & SQL)'
                 : 'Chương trình Tin học 11 - Định hướng Tin học ứng dụng (ICT: Thiết kế Web & CSDL)');
-        bannerTitle.textContent = `🏫 Lớp ${stu.class_id} (Khối ${stuGrade}) — ${trackName}`;
-        bannerSub.textContent = `Học sinh: ${stu.name} • Mã HS: ${stu.id} • Ngày sinh: ${stu.dob || '15/05/2011'} • Trạng thái quyền: ${stu.permission_status === 'LOCKED' ? '🔒 Đang tạm khóa thi' : '🟢 Đang mở quyền học tập & kiểm tra'}`;
+        bannerTitle.textContent = `🏫 Khối ${stuGrade} • Lớp ${stu.class_id} — ${trackName}`;
+        bannerSub.textContent = `Học sinh: ${stu.name} (Mã: ${stu.id} • NS: ${stu.dob || '15/05/2011'}) • Quyền thi: ${stu.permission_status === 'LOCKED' || (clsObj && !clsObj.exam_enabled) ? '🔒 Đề thi đang khóa' : '🟢 Đề thi đang mở'}`;
     }
 
-    // Kiểm tra quyền làm bài thi của Lớp hoặc Học sinh
-    const isLocked = stu.permission_status === 'LOCKED' || (clsObj && clsObj.exam_enabled === false);
-    const examLockNotice = document.getElementById('student-exam-lock-notice');
-    const examFormEl = document.getElementById('exam-form');
-    if (examLockNotice && examFormEl) {
-        if (isLocked) {
-            examLockNotice.classList.remove('hidden');
-            examFormEl.classList.add('hidden');
-        } else {
-            examLockNotice.classList.add('hidden');
-            examFormEl.classList.remove('hidden');
-        }
-    }
-
-    // Render danh sách Bài tập được giao cho Lớp/Khối kiểu OLM.vn
+    // Render danh sách Bài tập theo Bài học + Đề thi được giao cho Lớp
     const tasksContainer = document.getElementById('olm-assigned-tasks-list');
     if (tasksContainer) {
-        const trackProblems = APP_DATA[stuTrack] || [];
+        const allTrackProblems = APP_DATA[stuTrack] || [];
+        const assignedIds = (clsObj && Array.isArray(clsObj.assigned_problems) && clsObj.assigned_problems.length > 0)
+            ? clsObj.assigned_problems
+            : allTrackProblems.map(p => p.id);
+
+        const assignedProblems = allTrackProblems.filter(p => assignedIds.includes(p.id));
         const completedList = Array.isArray(stu.completed_tasks) ? stu.completed_tasks : [];
 
-        tasksContainer.innerHTML = trackProblems.map((prob, idx) => {
-            const isDone = completedList.includes(prob.id);
-            return `
-                <div class="p-4 rounded-xl border ${isDone ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200'} shadow-sm flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex items-start gap-3">
-                        <div class="w-9 h-9 rounded-xl ${isDone ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-black text-xs">
-                            ${isDone ? '✔' : idx + 1}
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${prob.type || 'PYTHON'}</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${prob.difficulty}</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                    ${isDone ? '✅ Đã hoàn thành (100%)' : '⏳ Bài giao cần làm'}
-                                </span>
-                            </div>
-                            <h4 class="font-bold text-sm text-slate-900 mt-1">${prob.title}</h4>
-                            <p class="text-xs text-slate-500 line-clamp-1">${prob.description}</p>
-                        </div>
+        // Thẻ Đề thi Định kỳ do Giáo viên Giao / Mở / Khóa cho Lớp
+        const examOpen = clsObj ? (clsObj.exam_enabled !== false && stu.permission_status !== 'LOCKED') : true;
+        const examDuration = (clsObj && clsObj.exam_duration_minutes) ? clsObj.exam_duration_minutes : 45;
+        const examTitle = (clsObj && clsObj.exam_title) ? clsObj.exam_title : 'Đề Kiểm Tra Định Kỳ Chuẩn Cấu Trúc BGD 2025';
+        const penaltyLabel = (clsObj && clsObj.penalty_mode === 'FIXED_10')
+            ? 'Trừ 1.0đ / lần vi phạm'
+            : ((clsObj && clsObj.penalty_mode === 'FIXED_05') ? 'Trừ 0.5đ / lần vi phạm' : 'Trừ 0.5đ -> 1.0đ tùy mức độ');
+
+        const examCardHtml = `
+            <div class="p-4 rounded-2xl border-2 ${examOpen ? 'bg-gradient-to-br from-indigo-50 via-white to-emerald-50 border-indigo-300' : 'bg-rose-50/70 border-rose-200'} shadow-sm flex flex-col justify-between gap-3">
+                <div>
+                    <div class="flex flex-wrap items-center justify-between gap-1.5">
+                        <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${examOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+                            ${examOpen ? '🔓 ĐỀ THI ĐANG MỞ CHO LỚP ' + stu.class_id : '🔒 ĐỀ THI ĐANG KHÓA'}
+                        </span>
+                        <span class="text-[11px] font-bold text-indigo-700">⏱️ ${examDuration} Phút</span>
                     </div>
-                    <button onclick="openAssignedProblemInJudge(${idx})" class="px-4 py-2 rounded-lg text-xs font-bold ${isDone ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} shadow-sm transition-all">
-                        ${isDone ? 'Làm lại nâng điểm' : '▶ Vào làm bài'}
+                    <h4 class="font-extrabold text-sm text-slate-900 mt-2">📝 ${examTitle}</h4>
+                    <p class="text-xs text-slate-600 mt-1">
+                        Chống sao chép & Chống chuyển tab tự động • Vi phạm: <strong>${penaltyLabel}</strong>.
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-slate-200/70 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500">Hạn nộp: ${clsObj?.deadline || '30/11/2026'}</span>
+                    <button onclick="switchTab('exam')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold ${examOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow' : 'bg-slate-300 text-slate-600'}">
+                        ${examOpen ? '🚀 Vào Phòng Thi Ngay' : '🔒 Đề Thi Đang Khóa'}
                     </button>
+                </div>
+            </div>
+        `;
+
+        const lessonCardsHtml = assignedProblems.map((prob) => {
+            const realIdx = allTrackProblems.findIndex(p => p.id === prob.id);
+            const isDone = completedList.includes(prob.id);
+            const lessonName = prob.lesson_title || prob.category || 'Bài học SGK Tin học THPT';
+            return `
+                <div class="p-4 rounded-2xl border ${isDone ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200'} shadow-sm flex flex-col justify-between gap-3">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-1.5">
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">📘 ${lessonName}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                ${isDone ? '✅ Đã hoàn thành' : '📌 Bài tập giao'}
+                            </span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">${prob.title}</h4>
+                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">${prob.description}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-[11px] font-semibold text-slate-500">${prob.type || 'PYTHON'} • ${prob.difficulty}</span>
+                        <button onclick="openAssignedProblemInJudge(${realIdx >= 0 ? realIdx : 0})" class="px-3.5 py-1.5 rounded-xl text-xs font-bold ${isDone ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} shadow-sm">
+                            ${isDone ? 'Làm lại nâng điểm' : '▶ Làm bài tập này'}
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
+
+        tasksContainer.innerHTML = examCardHtml + lessonCardsHtml;
+    }
+
+    // Đồng bộ trạng thái Phòng thi của Học sinh
+    if (typeof syncStudentExamLobbyState === 'function') {
+        syncStudentExamLobbyState();
     }
 
     // Render Bảng Vinh Danh Lớp (Class Leaderboard kiểu OLM.vn)
@@ -392,7 +507,7 @@ function renderStudentPortalHeaderAndTasks() {
                     <td class="px-3 py-2 text-center font-bold">${medal}</td>
                     <td class="px-3 py-2">${c.name} ${isMe ? '<span class="text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded ml-1">Bạn</span>' : ''}</td>
                     <td class="px-3 py-2 text-center">${c.class_id}</td>
-                    <td class="px-3 py-2 text-center font-bold text-emerald-700">${c.smart_score || 80}/100</td>
+                    <td class="px-3 py-2 text-center font-bold text-emerald-700">${c.smart_score || 85}/100</td>
                     <td class="px-3 py-2 text-right font-bold text-amber-700">🏆 ${(c.xp || 1000).toLocaleString()} XP</td>
                 </tr>
             `;
@@ -469,6 +584,7 @@ function downloadStandardExamTemplateXlsx() {
     const codeSample = [
         {
             "Khối": "k10",
+            "Bài học": "Bài 16: Ngôn ngữ lập trình bậc cao và Python",
             "Loại Engine": "ALGORITHM",
             "Tên bài tập": "Tính tổng hai số nguyên A và B",
             "Mức độ": "Nhận biết",
@@ -581,13 +697,15 @@ function parseExcelWorkbookToBank(arrayBuffer) {
                 const type = String(r['Loại Engine'] || r['Loại'] || 'ALGORITHM').trim().toUpperCase();
                 const sampleIn = String(r['Input mẫu'] || r['Input'] || '').trim();
                 const sampleOut = String(r['Output mẫu'] || r['Output'] || '').trim();
+                const lessonTitle = String(r['Bài học'] || r['Chủ đề'] || 'Bài học SGK Tin học').trim();
 
                 result.problems.push({
                     id: `imp_${Date.now()}_${idx}`,
                     track: ['k10', 'k11-cs', 'k11-ict'].includes(track) ? track : 'k10',
                     type: ['ALGORITHM', 'SQL', 'WEB'].includes(type) ? type : 'ALGORITHM',
                     title,
-                    category: type === 'SQL' ? 'Cơ sở dữ liệu SQL' : (type === 'WEB' ? 'Thiết kế Web' : 'Thuật toán & Lập trình'),
+                    lesson_title: lessonTitle,
+                    category: lessonTitle,
                     difficulty: String(r['Mức độ'] || 'Thông hiểu').trim(),
                     competency: String(r['Năng lực'] || 'NLc').trim(),
                     description: String(r['Đề bài'] || '').trim(),
@@ -677,6 +795,7 @@ function parseStructuredTextToBank(rawText) {
                 _kind: 'CODE',
                 id: 'code_doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
                 track: 'k10', type: 'ALGORITHM', title: probMatch[1].trim(),
+                lesson_title: 'Bài học SGK Tin học THPT',
                 category: 'Thuật toán & Lập trình', difficulty: 'Thông hiểu', competency: 'NLc',
                 description: '', input_format: 'Nhập từ luồng chuẩn.', sample_in: '', sample_out: '', starter_code: '', hint: 'Phân tích kỹ đề bài.'
             };
@@ -729,6 +848,7 @@ function parseStructuredTextToBank(rawText) {
 
         if (currentObj._kind === 'CODE') {
             if (/^Khối\s*:/i.test(line)) currentObj.track = line.split(':')[1].trim().toLowerCase();
+            else if (/^Bài\s*học\s*:/i.test(line)) currentObj.lesson_title = line.replace(/^Bài\s*học\s*:\s*/i, '').trim();
             else if (/^Loại\s*:/i.test(line)) currentObj.type = line.split(':')[1].trim().toUpperCase();
             else if (/^Mức\s*độ\s*:/i.test(line)) currentObj.difficulty = line.split(':')[1].trim();
             else if (/^Năng\s*lực\s*:/i.test(line)) currentObj.competency = line.split(':')[1].trim();
@@ -805,16 +925,16 @@ async function confirmAndApplyImportedBank(mode = 'APPEND') {
     renderExamQuestions();
     loadProblemList();
     renderAdminProblemList();
+    if (typeof renderLessonAssignmentManager === 'function') renderLessonAssignmentManager();
 
     if (window.cloudPipeline) {
         await window.cloudPipeline.commitJsonToGitHub(
             'data/exam-2025.json',
             EXAM_DATA,
-            'Cap nhat De thi & Ngan hang cau hoi tu file DOCX/XLSX'
+            `Cap nhat Ngan hang De thi tu file (${mode})`
         );
     }
 
     document.getElementById('import-preview-container').classList.add('hidden');
-    window.PENDING_IMPORT_DATA = null;
-    alert('🎉 Đã nạp thành công Đề thi & Ngân hàng Học liệu vào hệ thống!');
+    alert(`🎉 Đã nạp thành công Ngân hàng Câu hỏi & Đề thi vào hệ thống và đồng bộ GitHub (data/*.json)!`);
 }
