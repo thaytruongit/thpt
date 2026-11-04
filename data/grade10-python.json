@@ -1,0 +1,85 @@
+[
+  {
+    "id": "py10_01",
+    "title": "Tính chu vi và diện tích hình chữ nhật",
+    "category": "Cơ bản & Nhập xuất",
+    "grade": 10,
+    "difficulty": "Nhận biết",
+    "competency": "NLc",
+    "description": "Viết chương trình nhập vào hai số thực a và b là chiều dài và chiều rộng của hình chữ nhật. Tính và in ra chu vi và diện tích của hình chữ nhật trên hai dòng, làm tròn 2 chữ số thập phân.",
+    "input_format": "Một dòng chứa hai số thực a và b cách nhau một dấu cách (a, b > 0).",
+    "output_format": "Dòng 1 in 'Chu vi: <CV>'\nDòng 2 in 'Dien tich: <DT>'",
+    "sample_input": "5.0 3.0",
+    "sample_output": "Chu vi: 16.00\nDien tich: 15.00",
+    "starter_code": "# Nhập hai số a và b\na, b = map(float, input().split())\n\n# Viết code tính chu vi và diện tích ở đây\ncv = 2 * (a + b)\ndt = a * b\n\nprint(f'Chu vi: {cv:.2f}')\nprint(f'Dien tich: {dt:.2f}')\n",
+    "testcases": [
+      { "input": "5.0 3.0", "output": "Chu vi: 16.00\nDien tich: 15.00", "hidden": false },
+      { "input": "10 4.5", "output": "Chu vi: 29.00\nDien tich: 45.00", "hidden": false },
+      { "input": "123.45 67.89", "output": "Chu vi: 382.68\nDien tich: 8381.02", "hidden": true },
+      { "input": "1.0 1.0", "output": "Chu vi: 4.00\nDien tich: 1.00", "hidden": true }
+    ],
+    "hint": "Dùng công thức: cv = 2 * (a + b), dt = a * b. Định dạng in 2 chữ số thập phân bằng f'{cv:.2f}'."
+  },
+  {
+    "id": "py10_02",
+    "title": "Kiểm tra năm nhuận",
+    "category": "Cấu trúc rẽ nhánh",
+    "grade": 10,
+    "difficulty": "Thông hiểu",
+    "competency": "NLc",
+    "description": "Một năm là năm nhuận nếu năm đó chia hết cho 400 HOẶC (chia hết cho 4 và không chia hết cho 100). Viết chương trình nhập vào một năm nguyên dương N và kiểm tra N có phải năm nhuận không.",
+    "input_format": "Một số nguyên dương N (1 <= N <= 10000).",
+    "output_format": "In 'NAM NHUAN' nếu đúng, ngược lại in 'KHONG PHAI NAM NHUAN'.",
+    "sample_input": "2024",
+    "sample_output": "NAM NHUAN",
+    "starter_code": "year = int(input())\n\n# Kiểm tra điều kiện năm nhuận\nif (year % 400 == 0) or (year % 4 == 0 and year % 100 != 0):\n    print('NAM NHUAN')\nelse:\n    print('KHONG PHAI NAM NHUAN')\n",
+    "testcases": [
+      { "input": "2024", "output": "NAM NHUAN", "hidden": false },
+      { "input": "1900", "output": "KHONG PHAI NAM NHUAN", "hidden": false },
+      { "input": "2000", "output": "NAM NHUAN", "hidden": true },
+      { "input": "2023", "output": "KHONG PHAI NAM NHUAN", "hidden": true }
+    ],
+    "hint": "Chú ý năm tròn thế kỷ: 1900 chia hết cho 4 nhưng chia hết cho 100 nên không nhuận; 2000 chia hết cho 400 nên nhuận."
+  },
+  {
+    "id": "py10_03",
+    "title": "Tìm số nguyên tố trong khoảng",
+    "category": "Cấu trúc lặp & Hàm",
+    "grade": 10,
+    "difficulty": "Vận dụng",
+    "competency": "NLc",
+    "description": "Viết hàm kiem_tra_snt(n) trả về True nếu n là số nguyên tố, ngược lại False. Sau đó nhập hai số tự nhiên a và b (2 <= a <= b <= 1000). In ra tất cả các số nguyên tố trong đoạn [a, b] trên một dòng cách nhau bởi dấu cách.",
+    "input_format": "Một dòng gồm hai số tự nhiên a và b.",
+    "output_format": "Các số nguyên tố trong đoạn [a, b], cách nhau bởi dấu cách. Nếu không có số nào in 'KHONG CO'.",
+    "sample_input": "10 30",
+    "sample_output": "11 13 17 19 23 29",
+    "starter_code": "import math\n\ndef is_prime(n):\n    if n < 2:\n        return False\n    for i in range(2, int(math.isqrt(n)) + 1):\n        if n % i == 0:\n            return False\n    return True\n\na, b = map(int, input().split())\nprimes = [str(x) for x in range(a, b + 1) if is_prime(x)]\nif primes:\n    print(' '.join(primes))\nelse:\n    print('KHONG CO')\n",
+    "testcases": [
+      { "input": "10 30", "output": "11 13 17 19 23 29", "hidden": false },
+      { "input": "2 10", "output": "2 3 5 7", "hidden": false },
+      { "input": "24 28", "output": "KHONG CO", "hidden": true },
+      { "input": "90 100", "output": "97", "hidden": true }
+    ],
+    "hint": "Số nguyên tố là số chỉ có 2 ước 1 và chính nó. Chỉ cần duyệt ước từ 2 đến căn bậc hai của n để tối ưu thời gian."
+  },
+  {
+    "id": "py10_04",
+    "title": "Đếm và xử lý xâu ký tự",
+    "category": "Kiểu xâu (String)",
+    "grade": 10,
+    "difficulty": "Vận dụng",
+    "competency": "NLc",
+    "description": "Viết chương trình nhập vào một xâu ký tự S. Đếm xem trong xâu có bao nhiêu chữ cái in hoa, bao nhiêu chữ cái in thường và bao nhiêu chữ số.",
+    "input_format": "Một dòng chứa xâu ký tự S (độ dài tối đa 500 ký tự).",
+    "output_format": "In 3 dòng:\nHoa: <so_luong>\nThuong: <so_luong>\nSo: <so_luong>",
+    "sample_input": "TinHoc10_GDPT2018",
+    "sample_output": "Hoa: 8\nThuong: 3\nSo: 6",
+    "starter_code": "s = input()\nupper_count = sum(1 for c in s if c.isupper())\nlower_count = sum(1 for c in s if c.islower())\ndigit_count = sum(1 for c in s if c.isdigit())\n\nprint(f'Hoa: {upper_count}')\nprint(f'Thuong: {lower_count}')\nprint(f'So: {digit_count}')\n",
+    "testcases": [
+      { "input": "TinHoc10_GDPT2018", "output": "Hoa: 8\nThuong: 3\nSo: 6", "hidden": false },
+      { "input": "Hello World 123!", "output": "Hoa: 2\nThuong: 8\nSo: 3", "hidden": false },
+      { "input": "1234567890", "output": "Hoa: 0\nThuong: 0\nSo: 10", "hidden": true }
+    ],
+    "hint": "Sử dụng các phương thức có sẵn của xâu trong Python: .isupper(), .islower(), .isdigit()."
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "ict11_web_01",
+    "title": "Thiết kế Trang giới thiệu bản thân (HTML5 Semantics)",
+    "type": "WEB",
+    "category": "Thiết kế & Phát triển Web",
+    "grade": 11,
+    "difficulty": "Nhận biết",
+    "competency": "NLS4",
+    "description": "Sử dụng các thẻ HTML5 chuẩn ngữ nghĩa để xây dựng một trang web cá nhân gồm: `<header>` chứa tiêu đề tên bạn, `<main>` chứa ảnh đại diện và đoạn văn giới thiệu sở thích, `<section>` chứa danh sách các kỹ năng tin học (`<ul>`, `<li>`), và `<footer>` chứa thông tin liên hệ.",
+    "starter_code": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Trang cá nhân</title>\n  <style>\n    body { font-family: sans-serif; padding: 20px; line-height: 1.6; background: #f0fdf4; }\n    header { background: #16a34a; color: white; padding: 20px; border-radius: 8px; text-align: center; }\n    section { margin-top: 20px; background: white; padding: 15px; border-radius: 8px; }\n    footer { margin-top: 20px; text-align: center; font-size: 14px; color: #666; }\n  </style>\n</head>\n<body>\n  <header>\n    <h1>Xin chào, tôi là Học sinh Lớp 11 ICT</h1>\n  </header>\n  <main>\n    <section>\n      <h2>Giới thiệu</h2>\n      <p>Tôi đam mê công nghệ thông tin và thiết kế giao diện web hiện đại.</p>\n    </section>\n    <section>\n      <h2>Kỹ năng số</h2>\n      <ul>\n        <li>Thiết kế Web với HTML5 & CSS3</li>\n        <li>Xử lý bảng tính Excel nâng cao</li>\n        <li>Quản trị dữ liệu số</li>\n      </ul>\n    </section>\n  </main>\n  <footer>\n    <p>© 2026 Bản quyền thuộc về ThayTruongIT THPT</p>\n  </footer>\n</body>\n</html>",
+    "required_tags": ["header", "main", "section", "footer", "ul", "li"],
+    "hint": "Đảm bảo trang web sử dụng đúng các thẻ cấu trúc của HTML5 thay vì chỉ dùng thẻ div."
+  },
+  {
+    "id": "ict11_web_02",
+    "title": "Tạo Form Đăng ký Câu lạc bộ Tin học (Form Controls)",
+    "type": "WEB",
+    "category": "Thiết kế & Phát triển Web",
+    "grade": 11,
+    "difficulty": "Thông hiểu",
+    "competency": "NLS4",
+    "description": "Tạo một biểu mẫu `<form>` đăng ký tham gia CLB Tin học trường gồm: Ô nhập Họ tên (`<input type='text'>`), Email (`<input type='email'>`), Chọn lớp (`<select>` với các lớp 11A1, 11A2), Chọn lĩnh vực yêu thích (`<input type='radio'>` hoặc checkbox), và Nút gửi (`<button type='submit'>`).",
+    "starter_code": "<form style=\"max-width: 400px; margin: auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);\">\n  <h3 style=\"color: #2563eb; text-align: center;\">ĐĂNG KÝ CLB TIN HỌC</h3>\n  <div style=\"margin-bottom: 12px;\">\n    <label>Họ và tên:</label><br>\n    <input type=\"text\" placeholder=\"Nhập họ tên\" style=\"width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;\">\n  </div>\n  <div style=\"margin-bottom: 12px;\">\n    <label>Email liên hệ:</label><br>\n    <input type=\"email\" placeholder=\"name@school.edu.vn\" style=\"width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;\">\n  </div>\n  <div style=\"margin-bottom: 12px;\">\n    <label>Lớp học:</label><br>\n    <select style=\"width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;\">\n      <option>11A1 (ICT)</option>\n      <option>11A2 (CS)</option>\n    </select>\n  </div>\n  <button type=\"submit\" style=\"width: 100%; background: #2563eb; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;\">Đăng ký tham gia</button>\n</form>",
+    "required_tags": ["form", "input", "select", "button"],
+    "hint": "Sử dụng đầy đủ các thuộc tính type='text', type='email' và type='submit'."
+  }
+]

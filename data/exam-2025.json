@@ -1,0 +1,104 @@
+{
+  "exam_id": "gk1_thpt_tin11",
+  "title": "ĐỀ KIỂM TRA ĐỊNH KỲ MÔN TIN HỌC - CẤP THPT (CHƯƠNG TRÌNH GDPT 2018)",
+  "duration_minutes": 45,
+  "standard": "Bộ GD&ĐT 2025 - Thông tư 22/2021/TT-BGDĐT",
+  "part1_multiple_choice": {
+    "title": "PHẦN I. Thí sinh trả lời từ câu 1 đến câu 4. Mỗi câu hỏi thí sinh chỉ chọn một phương án.",
+    "points_per_question": 0.25,
+    "questions": [
+      {
+        "id": "p1_q1",
+        "question": "Trong hệ cơ sở dữ liệu quan hệ, một bảng (relation) gồm các dòng và cột. Mỗi dòng trong bảng biểu diễn cho:",
+        "options": {
+          "A": "Một thuộc tính của đối tượng.",
+          "B": "Một bản ghi (record) thể hiện một cá thể cụ thể của đối tượng.",
+          "C": "Khóa ngoại của bảng.",
+          "D": "Kiểu dữ liệu của các trường."
+        },
+        "correct": "B",
+        "explanation": "Trong bảng CSDL quan hệ, mỗi dòng (bản ghi/record/tuple) biểu diễn dữ liệu của một đối tượng cụ thể."
+      },
+      {
+        "id": "p1_q2",
+        "question": "Mệnh đề nào trong câu lệnh SELECT của SQL được dùng để lọc dữ liệu theo điều kiện?",
+        "options": {
+          "A": "ORDER BY",
+          "B": "GROUP BY",
+          "C": "WHERE",
+          "D": "FROM"
+        },
+        "correct": "C",
+        "explanation": "Mệnh đề WHERE dùng để chỉ định điều kiện lọc các bản ghi cần lấy ra."
+      },
+      {
+        "id": "p1_q3",
+        "question": "Thuật toán sắp xếp nào sau đây hoạt động theo nguyên lý 'Chia để trị' (Divide and Conquer)?",
+        "options": {
+          "A": "Sắp xếp nổi bọt (Bubble Sort)",
+          "B": "Sắp xếp chèn (Insertion Sort)",
+          "C": "Sắp xếp chọn (Selection Sort)",
+          "D": "Sắp xếp nhanh (QuickSort)"
+        },
+        "correct": "D",
+        "explanation": "QuickSort và MergeSort là hai thuật toán tiêu biểu theo tư tưởng Chia để trị (Divide and Conquer)."
+      },
+      {
+        "id": "p1_q4",
+        "question": "Trong thiết kế giao diện Web với CSS, thuộc tính nào được sử dụng để căn giữa nội dung theo trục chính trong mô hình Flexbox?",
+        "options": {
+          "A": "align-items: center;",
+          "B": "justify-content: center;",
+          "C": "flex-direction: column;",
+          "D": "text-align: center;"
+        },
+        "correct": "B",
+        "explanation": "Trong Flexbox, 'justify-content' kiểm soát căn chỉnh các phần tử theo trục chính (main axis)."
+      }
+    ]
+  },
+  "part2_true_false": {
+    "title": "PHẦN II. Thí sinh trả lời từ câu 1 đến câu 2. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn Đúng hoặc Sai.",
+    "scoring_rule": "Đúng 1 ý được 0.1 điểm; Đúng 2 ý được 0.25 điểm; Đúng 3 ý được 0.5 điểm; Đúng cả 4 ý được 1.0 điểm.",
+    "questions": [
+      {
+        "id": "p2_q1",
+        "context": "Xét một hệ thống quản lý thư viện trường học có bảng `SACH` gồm các trường: `MaSach` (Khóa chính), `TenSach`, `TacGia`, `NamXB`, `SoLuong`.",
+        "items": [
+          { "sub_id": "a", "statement": "Trường `MaSach` không được phép chứa hai giá trị trùng lặp trong cùng bảng `SACH`.", "correct": true, "reason": "Vì MaSach là khóa chính nên phải đảm bảo tính duy nhất và không được NULL." },
+          { "sub_id": "b", "statement": "Câu lệnh `SELECT * FROM SACH WHERE SoLuong > 0;` sẽ lấy ra toàn bộ các cuốn sách hiện còn trong thư viện.", "correct": true, "reason": "Điều kiện SoLuong > 0 lọc chính xác các sách còn hàng." },
+          { "sub_id": "c", "statement": "Không thể thêm trường `MaLoai` làm khóa ngoại kết nối tới bảng `THELOAI` nếu bảng `SACH` đã có dữ liệu.", "correct": false, "reason": "Hoàn toàn có thể dùng ALTER TABLE ADD CONSTRAINT FOREIGN KEY để bổ sung khóa ngoại bất kỳ lúc nào." },
+          { "sub_id": "d", "statement": "Lệnh `DROP TABLE SACH;` chỉ xóa các bản ghi bên trong bảng mà vẫn giữ lại cấu trúc của bảng.", "correct": false, "reason": "DROP TABLE xóa toàn bộ bảng và cấu trúc; lệnh chỉ xóa bản ghi là TRUNCATE hoặc DELETE FROM." }
+        ]
+      },
+      {
+        "id": "p2_q2",
+        "context": "Một học sinh lập trình Python cài đặt thuật toán tìm kiếm nhị phân để tìm phần tử x trong danh sách A gồm N phần tử đã sắp xếp tăng dần.",
+        "items": [
+          { "sub_id": "a", "statement": "Thuật toán tìm kiếm nhị phân chỉ áp dụng được khi danh sách đã được sắp xếp.", "correct": true, "reason": "Tính đơn điệu của danh sách đã sắp xếp là điều kiện tiên quyết của tìm kiếm nhị phân." },
+          { "sub_id": "b", "statement": "Độ phức tạp thời gian trong trường hợp xấu nhất của tìm kiếm nhị phân là O(N).", "correct": false, "reason": "Trường hợp xấu nhất là O(log N), không phải O(N)." },
+          { "sub_id": "c", "statement": "Nếu N = 1024, thuật toán chỉ cần tối đa khoảng 10 lần so sánh để tìm thấy x hoặc khẳng định x không có trong mảng.", "correct": true, "reason": "log2(1024) = 10 lần so sánh." },
+          { "sub_id": "d", "statement": "Nếu mảng chưa được sắp xếp, việc tìm kiếm tuần tự (Linear Search) luôn tối ưu hơn việc sắp xếp rồi tìm kiếm nhị phân khi chỉ cần tìm 1 lần duy nhất.", "correct": true, "reason": "Tìm 1 lần: Sắp xếp mất O(N log N) + tìm O(log N) > tìm tuần tự chỉ mất O(N)." }
+        ]
+      }
+    ]
+  },
+  "part3_short_answer": {
+    "title": "PHẦN III. Thí sinh trả lời từ câu 1 đến câu 2. Điền kết quả hoặc số nguyên vào ô trả lời.",
+    "points_per_question": 0.5,
+    "questions": [
+      {
+        "id": "p3_q1",
+        "question": "Cho đoạn mã Python sau:\n```python\na = [3, 8, 12, 19, 25, 33, 40]\nx = 25\nleft, right = 0, len(a) - 1\ncount = 0\nwhile left <= right:\n    count += 1\n    mid = (left + right) // 2\n    if a[mid] == x:\n        break\n    elif a[mid] < x:\n        left = mid + 1\n    else:\n        right = mid - 1\nprint(count)\n```\nHãy cho biết giá trị in ra màn hình là bao nhiêu?",
+        "correct_answer": "3",
+        "explanation": "Lần 1: mid = 3 (giá trị 19 < 25) => left = 4. Lần 2: mid = (4+6)//2 = 5 (giá trị 33 > 25) => right = 4. Lần 3: mid = (4+4)//2 = 4 (giá trị 25 == 25) => break. Vòng lặp chạy đúng 3 lần."
+      },
+      {
+        "id": "p3_q2",
+        "question": "Cho bảng dữ liệu `DIEM` gồm 5 dòng có điểm của các môn học: 8, 9, 6, 9, 10. Hãy cho biết kết quả trả về của câu lệnh SQL sau là số mấy:\n`SELECT COUNT(DISTINCT Diem) FROM DIEM;`",
+        "correct_answer": "4",
+        "explanation": "Các giá trị phân biệt (DISTINCT) của điểm là: 6, 8, 9, 10. Vậy hàm COUNT trả về 4."
+      }
+    ]
+  }
+}

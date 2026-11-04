@@ -1,0 +1,73 @@
+[
+  {
+    "id": "cs11_algo_01",
+    "title": "Cài đặt Tìm kiếm nhị phân (Binary Search)",
+    "type": "ALGORITHM",
+    "category": "Giải thuật & Cấu trúc dữ liệu",
+    "grade": 11,
+    "difficulty": "Thông hiểu",
+    "competency": "NLc",
+    "description": "Cho một dãy gồm N số nguyên đã được sắp xếp tăng dần và một số nguyên X. Hãy tìm vị trí (chỉ số tính từ 0) của X trong dãy bằng thuật toán tìm kiếm nhị phân. Nếu không tìm thấy, in ra -1.",
+    "input_format": "Dòng 1: Hai số nguyên N và X (1 <= N <= 10^5).\nDòng 2: N số nguyên tăng dần cách nhau dấu cách.",
+    "output_format": "Chỉ số của X trong mảng hoặc -1 nếu không có.",
+    "sample_input": "6 7\n1 3 5 7 9 11",
+    "sample_output": "3",
+    "starter_code": "def binary_search(arr, x):\n    left = 0\n    right = len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == x:\n            return mid\n        elif arr[mid] < x:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1\n\nn, x = map(int, input().split())\narr = list(map(int, input().split()))\nprint(binary_search(arr, x))\n",
+    "testcases": [
+      { "input": "6 7\n1 3 5 7 9 11", "output": "3", "hidden": false },
+      { "input": "5 10\n2 4 6 8 10", "output": "4", "hidden": false },
+      { "input": "5 1\n2 4 6 8 10", "output": "-1", "hidden": true },
+      { "input": "1 5\n5", "output": "0", "hidden": true }
+    ],
+    "hint": "Thuật toán tìm kiếm nhị phân chia đôi khoảng tìm kiếm sau mỗi bước, đạt độ phức tạp thời gian O(log N)."
+  },
+  {
+    "id": "cs11_algo_02",
+    "title": "Thuật toán Sắp xếp nhanh (QuickSort)",
+    "type": "ALGORITHM",
+    "category": "Giải thuật & Cấu trúc dữ liệu",
+    "grade": 11,
+    "difficulty": "Vận dụng",
+    "competency": "NLc",
+    "description": "Cài đặt thuật toán QuickSort để sắp xếp dãy số nguyên A gồm N phần tử theo thứ tự tăng dần. In ra dãy sau khi đã sắp xếp.",
+    "input_format": "Dòng 1: Số nguyên N (1 <= N <= 10^4).\nDòng 2: N số nguyên cách nhau một dấu cách.",
+    "output_format": "Dãy số đã sắp xếp tăng dần trên một dòng.",
+    "sample_input": "6\n8 3 1 7 0 10",
+    "sample_output": "0 1 3 7 8 10",
+    "starter_code": "def quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)\n\nn = int(input())\narr = list(map(int, input().split()))\nsorted_arr = quick_sort(arr)\nprint(*(sorted_arr))\n",
+    "testcases": [
+      { "input": "6\n8 3 1 7 0 10", "output": "0 1 3 7 8 10", "hidden": false },
+      { "input": "5\n5 4 3 2 1", "output": "1 2 3 4 5", "hidden": false },
+      { "input": "4\n2 2 2 2", "output": "2 2 2 2", "hidden": true }
+    ],
+    "hint": "Chọn phần tử chốt (pivot), phân hoạch mảng thành 3 mảng con (< pivot, == pivot, > pivot) rồi đệ quy."
+  },
+  {
+    "id": "cs11_sql_01",
+    "title": "Truy vấn danh sách học sinh đạt điểm Giỏi",
+    "type": "SQL",
+    "category": "Cơ sở dữ liệu quan hệ (SQL)",
+    "grade": 11,
+    "difficulty": "Thông hiểu",
+    "competency": "NLS2",
+    "description": "Cho bảng `HOCSINH` gồm các cột: `MaHS` (TEXT), `HoTen` (TEXT), `Lop` (TEXT), `DiemTB` (REAL). Hãy viết câu truy vấn SQL lấy ra `MaHS`, `HoTen`, `DiemTB` của các học sinh có điểm trung bình từ 8.0 trở lên, sắp xếp giảm dần theo `DiemTB`.",
+    "sql_init": "CREATE TABLE HOCSINH (MaHS TEXT PRIMARY KEY, HoTen TEXT, Lop TEXT, DiemTB REAL);\nINSERT INTO HOCSINH VALUES ('HS01', 'Nguyen Van An', '11A1', 8.5);\nINSERT INTO HOCSINH VALUES ('HS02', 'Tran Thi Binh', '11A1', 7.2);\nINSERT INTO HOCSINH VALUES ('HS03', 'Le Hoang Cuong', '11A2', 9.0);\nINSERT INTO HOCSINH VALUES ('HS04', 'Pham Minh Duc', '11A2', 6.8);\nINSERT INTO HOCSINH VALUES ('HS05', 'Vo Ngoc Ha', '11A1', 8.0);",
+    "expected_query": "SELECT MaHS, HoTen, DiemTB FROM HOCSINH WHERE DiemTB >= 8.0 ORDER BY DiemTB DESC;",
+    "starter_code": "-- Viết câu lệnh SELECT của bạn ở đây\nSELECT MaHS, HoTen, DiemTB \nFROM HOCSINH \nWHERE DiemTB >= 8.0 \nORDER BY DiemTB DESC;\n",
+    "hint": "Dùng mệnh đề WHERE DiemTB >= 8.0 kết hợp ORDER BY DiemTB DESC."
+  },
+  {
+    "id": "cs11_sql_02",
+    "title": "Truy vấn kết nối bảng Học sinh và Lớp học (JOIN)",
+    "type": "SQL",
+    "category": "Cơ sở dữ liệu quan hệ (SQL)",
+    "grade": 11,
+    "difficulty": "Vận dụng",
+    "competency": "NLS2",
+    "description": "Cho 2 bảng: `LOPHOC (MaLop, TenLop, GiaoVienCN)` và `HOCSINH (MaHS, HoTen, MaLop)`. Hãy viết câu truy vấn SQL để hiển thị `HoTen` học sinh, `TenLop` và tên `GiaoVienCN` của học sinh đó.",
+    "sql_init": "CREATE TABLE LOPHOC (MaLop TEXT PRIMARY KEY, TenLop TEXT, GiaoVienCN TEXT);\nCREATE TABLE HOCSINH (MaHS TEXT PRIMARY KEY, HoTen TEXT, MaLop TEXT);\nINSERT INTO LOPHOC VALUES ('L11A', '11A1', 'Thay Nam');\nINSERT INTO LOPHOC VALUES ('L11B', '11A2', 'Co Huong');\nINSERT INTO HOCSINH VALUES ('H01', 'Pham Van A', 'L11A');\nINSERT INTO HOCSINH VALUES ('H02', 'Le Thi B', 'L11B');\nINSERT INTO HOCSINH VALUES ('H03', 'Nguyen Van C', 'L11A');",
+    "expected_query": "SELECT H.HoTen, L.TenLop, L.GiaoVienCN FROM HOCSINH H JOIN LOPHOC L ON H.MaLop = L.MaLop;",
+    "starter_code": "-- Viết truy vấn kết nối 2 bảng (INNER JOIN)\nSELECT H.HoTen, L.TenLop, L.GiaoVienCN\nFROM HOCSINH H\nJOIN LOPHOC L ON H.MaLop = L.MaLop;\n",
+    "hint": "Sử dụng cú pháp JOIN ON để kết nối 2 bảng thông qua khóa ngoại MaLop."
+  }
+]
