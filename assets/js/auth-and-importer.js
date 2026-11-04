@@ -399,35 +399,41 @@ function renderStudentPortalHeaderAndTasks() {
     const strkEl = document.getElementById('header-streak');
     const smartEl = document.getElementById('header-smartscore');
 
-    if (xpEl) xpEl.textContent = (stu.xp || 1000).toLocaleString();
-    if (lvlEl) lvlEl.textContent = `Lv.${stu.level || Math.floor((stu.xp || 1000) / 500) + 1} Coder`;
-    if (strkEl) strkEl.textContent = `${stu.streak || 1} Ngày`;
-    if (smartEl) smartEl.textContent = `${stu.smart_score || 85}/100`;
+    if (xpEl) xpEl.textContent = (stu.xp || 1450).toLocaleString();
+    if (lvlEl) lvlEl.textContent = `${stu.level || 3}`;
+    if (strkEl) strkEl.textContent = `${stu.streak || 6}`;
+    if (smartEl) smartEl.textContent = `${stu.smart_score || 92}/100`;
 
     const bannerTitle = document.getElementById('student-scope-banner-title');
     const bannerSub = document.getElementById('student-scope-banner-sub');
-    if (bannerTitle && bannerSub) {
+    const bannerStatus = document.getElementById('student-scope-status-text');
+
+    if (bannerTitle) {
         const trackName = stuTrack === 'k10'
             ? 'Chương trình Tin học 10: Lập trình Python cơ bản'
             : (stuTrack === 'k11-cs'
-                ? 'Chương trình Tin học 11 - Định hướng Khoa học máy tính (CS: Thuật toán & SQL)'
-                : 'Chương trình Tin học 11 - Định hướng Tin học ứng dụng (ICT: Thiết kế Web & CSDL)');
-        bannerTitle.textContent = `🏫 Khối ${stuGrade} • Lớp ${stu.class_id} — ${trackName}`;
-        bannerSub.textContent = `Học sinh: ${stu.name} (Mã: ${stu.id} • NS: ${stu.dob || '15/05/2011'}) • Quyền thi: ${stu.permission_status === 'LOCKED' || (clsObj && !clsObj.exam_enabled) ? '🔒 Đề thi đang khóa' : '🟢 Đề thi đang mở'}`;
+                ? 'Chương trình Tin học 11 (CS): Thuật toán & CSDL SQL'
+                : 'Chương trình Tin học 11 (ICT): Thiết kế Web & CSDL');
+        bannerTitle.textContent = `Lớp ${stu.class_id} (Khối ${stuGrade}) — ${trackName}`;
+    }
+    if (bannerSub) {
+        bannerSub.textContent = `Học sinh: ${stu.name} • Mã HS: ${stu.id} • Ngày sinh: ${stu.dob || '12/05/2011'}`;
+    }
+    if (bannerStatus) {
+        const isLocked = stu.permission_status === 'LOCKED' || (clsObj && clsObj.exam_enabled === false);
+        bannerStatus.innerHTML = isLocked
+            ? `🔒 <span class="text-rose-600 font-bold">Đề thi định kỳ đang khóa (Bài học & Bài tập vẫn mở)</span>`
+            : `<span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span><span class="text-emerald-700 font-bold">Đang mở quyền học tập & kiểm tra</span>`;
     }
 
-    // Render danh sách Bài tập theo Bài học + Đề thi được giao cho Lớp
-    const tasksContainer = document.getElementById('olm-assigned-tasks-list');
-    if (tasksContainer) {
-        const allTrackProblems = APP_DATA[stuTrack] || [];
-        const assignedIds = (clsObj && Array.isArray(clsObj.assigned_problems) && clsObj.assigned_problems.length > 0)
-            ? clsObj.assigned_problems
-            : allTrackProblems.map(p => p.id);
+    // Render GridView 4 cột toàn bộ 34 Bài học Tin học 10 Kết nối tri thức
+    if (typeof renderKntt10GridView === 'function') {
+        renderKntt10GridView();
+    }
 
-        const assignedProblems = allTrackProblems.filter(p => assignedIds.includes(p.id));
-        const completedList = Array.isArray(stu.completed_tasks) ? stu.completed_tasks : [];
-
-        // Thẻ Đề thi Định kỳ do Giáo viên Giao / Mở / Khóa cho Lớp
+    // Cập nhật thông tin Bài Kiểm Tra Định Kỳ ngay bên trong Không gian Bài học (#lesson-periodic-exam-card)
+    const periodicCardEl = document.getElementById('lesson-periodic-exam-card');
+    if (periodicCardEl) {
         const examOpen = clsObj ? (clsObj.exam_enabled !== false && stu.permission_status !== 'LOCKED') : true;
         const examDuration = (clsObj && clsObj.exam_duration_minutes) ? clsObj.exam_duration_minutes : 45;
         const examTitle = (clsObj && clsObj.exam_title) ? clsObj.exam_title : 'Đề Kiểm Tra Định Kỳ Chuẩn Cấu Trúc BGD 2025';
@@ -435,56 +441,26 @@ function renderStudentPortalHeaderAndTasks() {
             ? 'Trừ 1.0đ / lần vi phạm'
             : ((clsObj && clsObj.penalty_mode === 'FIXED_05') ? 'Trừ 0.5đ / lần vi phạm' : 'Trừ 0.5đ -> 1.0đ tùy mức độ');
 
-        const examCardHtml = `
-            <div class="p-4 rounded-2xl border-2 ${examOpen ? 'bg-gradient-to-br from-indigo-50 via-white to-emerald-50 border-indigo-300' : 'bg-rose-50/70 border-rose-200'} shadow-sm flex flex-col justify-between gap-3">
-                <div>
-                    <div class="flex flex-wrap items-center justify-between gap-1.5">
-                        <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${examOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
-                            ${examOpen ? '🔓 ĐỀ THI ĐANG MỞ CHO LỚP ' + stu.class_id : '🔒 ĐỀ THI ĐANG KHÓA'}
-                        </span>
-                        <span class="text-[11px] font-bold text-indigo-700">⏱️ ${examDuration} Phút</span>
-                    </div>
-                    <h4 class="font-extrabold text-sm text-slate-900 mt-2">📝 ${examTitle}</h4>
-                    <p class="text-xs text-slate-600 mt-1">
-                        Chống sao chép & Chống chuyển tab tự động • Vi phạm: <strong>${penaltyLabel}</strong>.
-                    </p>
+        periodicCardEl.innerHTML = `
+            <div class="p-5 rounded-2xl border-2 ${examOpen ? 'bg-gradient-to-br from-sky-50 via-white to-indigo-50 border-sky-300' : 'bg-rose-50/70 border-rose-200'} shadow-sm space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-extrabold uppercase px-3 py-1 rounded-full ${examOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+                        ${examOpen ? '🔓 ĐỀ KIỂM TRA ĐỊNH KỲ ĐANG MỞ CHO KHỐI ' + stuGrade + ' - LỚP ' + stu.class_id : '🔒 ĐỀ KIỂM TRA ĐỊNH KỲ ĐANG KHÓA'}
+                    </span>
+                    <span class="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">⏱️ Thời gian: ${examDuration} Phút</span>
                 </div>
-                <div class="pt-2 border-t border-slate-200/70 flex items-center justify-between">
-                    <span class="text-[11px] text-slate-500">Hạn nộp: ${clsObj?.deadline || '30/11/2026'}</span>
-                    <button onclick="switchTab('exam')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold ${examOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow' : 'bg-slate-300 text-slate-600'}">
-                        ${examOpen ? '🚀 Vào Phòng Thi Ngay' : '🔒 Đề Thi Đang Khóa'}
+                <h4 class="font-black text-base text-slate-900">📝 ${examTitle}</h4>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Bài kiểm tra định kỳ được Giáo viên giao theo <strong>Khối ${stuGrade} • Lớp ${stu.class_id}</strong> và tích hợp trực tiếp trong tiến trình bài học. Hệ thống tự động đếm ngược <strong>${examDuration} phút</strong>, chống sao chép (Copy/Paste) và chống chuyển tab (<strong>${penaltyLabel}</strong>).
+                </p>
+                <div class="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70">
+                    <span class="text-xs text-slate-500 font-semibold">📅 Hạn hoàn thành của lớp: ${clsObj?.deadline || '30/11/2026'}</span>
+                    <button type="button" onclick="switchTab('exam')" class="px-5 py-2.5 rounded-full text-xs font-extrabold ${examOpen ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md' : 'bg-slate-300 text-slate-600'}">
+                        ${examOpen ? '🚀 Bắt Đầu Làm Bài Kiểm Tra Định Kỳ Ngay' : '🔒 Chờ Giáo Viên Mở Đề Thi'}
                     </button>
                 </div>
             </div>
         `;
-
-        const lessonCardsHtml = assignedProblems.map((prob) => {
-            const realIdx = allTrackProblems.findIndex(p => p.id === prob.id);
-            const isDone = completedList.includes(prob.id);
-            const lessonName = prob.lesson_title || prob.category || 'Bài học SGK Tin học THPT';
-            return `
-                <div class="p-4 rounded-2xl border ${isDone ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200'} shadow-sm flex flex-col justify-between gap-3">
-                    <div>
-                        <div class="flex flex-wrap items-center justify-between gap-1.5">
-                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">📘 ${lessonName}</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                                ${isDone ? '✅ Đã hoàn thành' : '📌 Bài tập giao'}
-                            </span>
-                        </div>
-                        <h4 class="font-bold text-sm text-slate-900 mt-2">${prob.title}</h4>
-                        <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">${prob.description}</p>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-slate-500">${prob.type || 'PYTHON'} • ${prob.difficulty}</span>
-                        <button onclick="openAssignedProblemInJudge(${realIdx >= 0 ? realIdx : 0})" class="px-3.5 py-1.5 rounded-xl text-xs font-bold ${isDone ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} shadow-sm">
-                            ${isDone ? 'Làm lại nâng điểm' : '▶ Làm bài tập này'}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        tasksContainer.innerHTML = examCardHtml + lessonCardsHtml;
     }
 
     // Đồng bộ trạng thái Phòng thi của Học sinh
@@ -507,8 +483,8 @@ function renderStudentPortalHeaderAndTasks() {
                     <td class="px-3 py-2 text-center font-bold">${medal}</td>
                     <td class="px-3 py-2">${c.name} ${isMe ? '<span class="text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded ml-1">Bạn</span>' : ''}</td>
                     <td class="px-3 py-2 text-center">${c.class_id}</td>
-                    <td class="px-3 py-2 text-center font-bold text-emerald-700">${c.smart_score || 85}/100</td>
-                    <td class="px-3 py-2 text-right font-bold text-amber-700">🏆 ${(c.xp || 1000).toLocaleString()} XP</td>
+                    <td class="px-3 py-2 text-center font-bold text-emerald-700">${c.smart_score || 92}/100</td>
+                    <td class="px-3 py-2 text-right font-bold text-amber-700">🏆 ${(c.xp || 1450).toLocaleString()} XP</td>
                 </tr>
             `;
         }).join('');

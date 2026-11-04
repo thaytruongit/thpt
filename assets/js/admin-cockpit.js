@@ -419,6 +419,22 @@ function saveLessonAssignmentForClass() {
 /**
  * GIAO ĐỀ THI, MỞ ĐỀ THI, KHÓA ĐỀ THI & CẤU HÌNH THỜI GIAN + MỨC TRỪ ĐIỂM CHỐNG GIAN LẬN
  */
+function onChangeExamConfigGradeFilter() {
+    const gradeSel = document.getElementById('exam-cfg-grade-select');
+    const classSel = document.getElementById('exam-cfg-class-select');
+    if (!classSel || !window.CLASSES_LIST) return;
+    const gradeVal = gradeSel ? gradeSel.value : 'ALL';
+    const filteredClasses = gradeVal === 'ALL'
+        ? window.CLASSES_LIST
+        : window.CLASSES_LIST.filter(c => String(c.grade) === String(gradeVal));
+
+    classSel.innerHTML =
+        `<option value="ALL">Tất cả các lớp (${gradeVal === 'ALL' ? 'Khối 10 & 11' : 'Toàn bộ Khối ' + gradeVal})</option>` +
+        filteredClasses.map(c => `<option value="${c.id}">Khối ${c.grade} • Lớp ${c.id} (${c.name})</option>`).join('');
+
+    onChangeExamConfigClassSelect();
+}
+
 function onChangeExamConfigClassSelect() {
     const classSel = document.getElementById('exam-cfg-class-select');
     if (!classSel) return;
@@ -438,19 +454,28 @@ function onChangeExamConfigClassSelect() {
 }
 
 function saveAndDispatchExamToClass(openImmediately = true) {
+    const gradeSel = document.getElementById('exam-cfg-grade-select');
     const classSel = document.getElementById('exam-cfg-class-select');
     const titleEl = document.getElementById('exam-cfg-title');
     const durEl = document.getElementById('exam-cfg-duration');
     const penEl = document.getElementById('exam-cfg-penalty');
     const maxVioEl = document.getElementById('exam-cfg-max-violations');
 
+    const gradeVal = gradeSel ? gradeSel.value : 'ALL';
     const targetId = classSel ? classSel.value : 'ALL';
     const examTitle = (titleEl ? titleEl.value.trim() : '') || 'Đề Kiểm Tra Định Kỳ Chuẩn Cấu Trúc BGD 2025';
     const durationMins = Math.max(5, Math.min(180, parseInt(durEl ? durEl.value : 45) || 45));
     const penaltyMode = penEl ? penEl.value : 'TIERED';
     const maxViolations = Math.max(1, parseInt(maxVioEl ? maxVioEl.value : 3) || 3);
 
-    const targets = targetId === 'ALL' ? (window.CLASSES_LIST || []) : [getClassById(targetId)].filter(Boolean);
+    let targets = [];
+    if (targetId === 'ALL') {
+        targets = gradeVal === 'ALL'
+            ? (window.CLASSES_LIST || [])
+            : (window.CLASSES_LIST || []).filter(c => String(c.grade) === String(gradeVal));
+    } else {
+        targets = [getClassById(targetId)].filter(Boolean);
+    }
 
     targets.forEach(c => {
         c.assigned_exam = true;

@@ -49,12 +49,16 @@
     </script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #eff6ff 0%, #f4f8fd 50%, #eef4fc 100%);
+        }
         .code-font { font-family: 'JetBrains Mono', monospace; }
         .tab-btn.active {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+            border-color: #6366f1 !important;
+            background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.25), 0 0 0 2px rgba(99, 102, 241, 0.15);
+            transform: translateY(-2px);
         }
         .flip-card { perspective: 1000px; }
         .flip-card-inner {
@@ -72,7 +76,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800 min-h-screen flex flex-col">
 
     <!-- ============================================================================ -->
     <!-- MODAL CẢNH BÁO VI PHẠM QUY CHẾ THI (CHỐNG SAO CHÉP / CHUYỂN TAB)            -->
@@ -190,49 +194,45 @@
     </div>
 
     <!-- ============================================================================ -->
-    <!-- TOP GAMIFICATION & ROLE STATUS BAR                                           -->
+    <!-- TOP GAMIFICATION & ROLE STATUS BAR (LIGHT PASTEL 3D OLM THEME)               -->
     <!-- ============================================================================ -->
-    <header class="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md text-slate-800 border-b border-blue-100/80 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 flex items-center justify-center font-extrabold text-lg shadow-md">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 text-white flex items-center justify-center font-black text-base shadow-md shadow-indigo-500/20">
                     IT
                 </div>
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-base tracking-tight">THPT Informatics Hub</span>
-                        <span class="text-[11px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                            OLM.vn LMS • GDPT 2018
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight">THPT Informatics Hub</span>
+                        <span class="text-[10px] uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200/80 tracking-wider">
+                            OLM.VN ARCHITECTURE • GDPT 2018
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400">Giao bài theo Bài học • Mở/Giao/Khóa Đề thi • Đếm ngược & Chống gian lận tự động</p>
+                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Hệ thống Quản Lý Lớp học (Khối 10, 11) • Giao bài • Auto-Judge & Đồng bộ Google Sheets</p>
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
                 <div id="student-header-widgets" class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1.5 bg-slate-800/90 border border-emerald-500/40 px-3 py-1.5 rounded-lg" title="OLM SmartScore - Điểm thông thạo kỹ năng">
-                        <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
-                        <span>SmartScore: <strong id="header-smartscore" class="text-emerald-300">88/100</strong></span>
+                    <div class="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-green-100/90 border border-emerald-300 text-emerald-900 px-3.5 py-1.5 rounded-full shadow-sm">
+                        <span>🎯 SmartScore: <strong id="header-smartscore" class="font-black text-emerald-800">92/100</strong></span>
                     </div>
-                    <div class="flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg">
-                        <i data-lucide="flame" class="w-4 h-4 text-orange-400"></i>
-                        <span>Streak: <strong id="header-streak" class="text-orange-300">7 Ngày</strong></span>
+                    <div class="flex items-center gap-1.5 bg-gradient-to-r from-orange-50 to-amber-100/90 border border-orange-300 text-orange-900 px-3.5 py-1.5 rounded-full shadow-sm">
+                        <span>🔥 Streak: <strong id="header-streak" class="font-black text-orange-800">6</strong></span>
                     </div>
-                    <div class="flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg">
-                        <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i>
-                        <span>XP: <strong id="header-xp" class="text-yellow-300">1,250</strong></span>
+                    <div class="flex items-center gap-1.5 bg-gradient-to-r from-sky-50 to-blue-100/90 border border-sky-300 text-blue-900 px-3.5 py-1.5 rounded-full shadow-sm">
+                        <span>⚡ XP: <strong id="header-xp" class="font-black text-blue-800">1,450</strong></span>
                     </div>
-                    <div class="hidden md:flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg">
-                        <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Cấp độ: <strong id="header-level" class="text-emerald-300">Lv.4 Coder</strong></span>
+                    <div class="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-100/90 border border-purple-300 text-purple-900 px-3.5 py-1.5 rounded-full shadow-sm">
+                        <span>🏆 Cấp độ: <strong id="header-level" class="font-black text-purple-800">3</strong></span>
                     </div>
                 </div>
 
-                <div id="header-role-badge"></div>
+                <div id="header-role-badge" class="hidden"></div>
 
-                <button onclick="logoutCurrentSession()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition font-bold shadow-sm">
-                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <button onclick="logoutCurrentSession()" class="flex items-center gap-1.5 bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 px-3.5 py-1.5 rounded-full transition font-extrabold shadow-sm">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
                     <span>Đổi Tài Khoản</span>
                 </button>
             </div>
@@ -249,200 +249,478 @@
         <!-- ======================================================================== -->
         <div id="student-workspace-wrapper" class="space-y-5">
 
-            <!-- Student Class & Grade Scope Banner -->
-            <section class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-lg border border-indigo-700/50">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold mb-1.5">
-                            <span>🎓 KHÔNG GIAN HỌC TẬP & THI TRỰC TUYẾN THEO KHỐI / LỚP</span>
+            <!-- HERO BANNER CHUẨN HÌNH MẪU (AVATAR TRÁI + THÔNG TIN LỚP + 3D ROBOT PYTHON LAPTOP PHẢI) -->
+            <section class="relative overflow-hidden rounded-3xl p-5 sm:p-6 shadow-md border border-blue-200/80" style="background: linear-gradient(135deg, #d8eeff 0%, #e7f0fd 55%, #f1e8ff 100%);">
+                <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <!-- Left: 3D Student Avatar + Class Info -->
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left">
+                        <!-- 3D Avatar Circle -->
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-sky-200 via-blue-100 to-indigo-200 p-1 shadow-lg border-4 border-white shrink-0 flex items-center justify-center overflow-hidden">
+                            <svg viewBox="0 0 100 100" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="bgAv" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="#bae6fd"/>
+                                        <stop offset="100%" stop-color="#c7d2fe"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="50" cy="50" r="50" fill="url(#bgAv)"/>
+                                <!-- Shoulders / Hoodie -->
+                                <path d="M18 96 C20 72, 80 72, 82 96 Z" fill="#1e293b"/>
+                                <path d="M28 96 C30 76, 70 76, 72 96 Z" fill="#38bdf8"/>
+                                <!-- Neck -->
+                                <rect x="43" y="62" width="14" height="14" rx="5" fill="#f1c27d"/>
+                                <!-- Face -->
+                                <ellipse cx="50" cy="48" rx="20" ry="22" fill="#ffdbac"/>
+                                <!-- Hair -->
+                                <path d="M28 44 C26 22, 45 14, 62 18 C74 21, 74 36, 70 44 C66 34, 56 28, 42 30 C34 31, 31 38, 28 44 Z" fill="#5c3a21"/>
+                                <path d="M34 24 C42 15, 58 15, 68 25 C60 22, 44 22, 34 24 Z" fill="#7c4dff" opacity="0.25"/>
+                                <!-- Eyes & Smile -->
+                                <circle cx="42" cy="48" r="2.5" fill="#1e293b"/>
+                                <circle cx="58" cy="48" r="2.5" fill="#1e293b"/>
+                                <path d="M43 56 Q50 61 57 56" stroke="#c2410c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            </svg>
                         </div>
-                        <h1 id="student-scope-banner-title" class="text-lg sm:text-xl font-extrabold tracking-tight">
-                            Khối 10 • Lớp 10A1 - Tin học 10 (Python Cơ bản)
-                        </h1>
-                        <p id="student-scope-banner-sub" class="text-xs text-indigo-200 mt-1">
-                            Học sinh: Nguyễn Văn An (Mã: HS1001) • Bài học và Đề thi hiển thị theo đúng phân quyền Lớp của em.
-                        </p>
+
+                        <div class="space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/80 border border-blue-200 text-blue-700 text-[10px] sm:text-[11px] font-extrabold tracking-wide shadow-sm">
+                                <span>🛡️ CỔNG HỌC TẬP CÁ NHÂN HÓA THEO LỚP & KHỐI (OLM.VN UX)</span>
+                            </div>
+                            <h1 id="student-scope-banner-title" class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+                                Lớp 10A1 (Khối 10) — Chương trình Tin học 10: Lập trình Python cơ bản
+                            </h1>
+                            <p id="student-scope-banner-sub" class="text-xs sm:text-sm text-slate-700 font-semibold">
+                                Học sinh: Nguyễn Văn An • Mã HS: HS1001 • Ngày sinh: 12/05/2011
+                            </p>
+                            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
+                                <div class="text-xs sm:text-sm text-slate-700 font-semibold">
+                                    Trạng thái quyền: <span id="student-scope-status-text"><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span><span class="text-emerald-700 font-bold">Đang mở quyền học tập & kiểm tra</span></span>
+                                </div>
+                                <span id="runner-engine-status" class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold shadow-sm">
+                                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                    WASM Judge Sẵn sàng
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-indigo-500/30 text-xs">
-                        <span id="runner-engine-status" class="flex items-center gap-1.5 text-emerald-300 font-semibold">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            WASM Judge Sẵn sàng
-                        </span>
+
+                    <!-- Right: 3D Robot + Python Snake + Laptop + Floating Code Card Illustration -->
+                    <div class="hidden md:flex items-center justify-end shrink-0">
+                        <svg viewBox="0 0 340 130" class="w-80 h-32 drop-shadow-sm">
+                            <!-- Floating Code Window -->
+                            <rect x="8" y="8" width="98" height="58" rx="8" fill="#ffffff" opacity="0.92" stroke="#bfdbfe" stroke-width="1.5"/>
+                            <circle cx="18" cy="17" r="2.5" fill="#f43f5e"/>
+                            <circle cx="26" cy="17" r="2.5" fill="#f59e0b"/>
+                            <circle cx="34" cy="17" r="2.5" fill="#10b981"/>
+                            <rect x="16" y="27" width="52" height="4" rx="2" fill="#93c5fd"/>
+                            <rect x="16" y="36" width="74" height="4" rx="2" fill="#cbd5e1"/>
+                            <rect x="22" y="45" width="60" height="4" rx="2" fill="#a5b4fc"/>
+                            <rect x="16" y="54" width="40" height="4" rx="2" fill="#6ee7b7"/>
+
+                            <!-- Cute 3D AI Robot -->
+                            <g transform="translate(105, 10)">
+                                <ellipse cx="42" cy="108" rx="22" ry="5" fill="#94a3b8" opacity="0.35"/>
+                                <!-- Robot Body -->
+                                <rect x="22" y="58" width="40" height="38" rx="18" fill="#e0f2fe" stroke="#60a5fa" stroke-width="2"/>
+                                <rect x="30" y="66" width="24" height="16" rx="6" fill="#38bdf8"/>
+                                <!-- Robot Head -->
+                                <rect x="14" y="14" width="56" height="42" rx="20" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
+                                <!-- Headphones -->
+                                <rect x="8" y="24" width="8" height="22" rx="4" fill="#6366f1"/>
+                                <rect x="68" y="24" width="8" height="22" rx="4" fill="#6366f1"/>
+                                <!-- Screen Face -->
+                                <rect x="21" y="22" width="42" height="26" rx="12" fill="#0f172a"/>
+                                <!-- Glowing Happy Eyes & Smile -->
+                                <path d="M29 33 Q33 28 37 33" stroke="#38bdf8" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+                                <path d="M47 33 Q51 28 55 33" stroke="#38bdf8" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+                                <path d="M36 40 Q42 45 48 40" stroke="#38bdf8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                                <!-- Waving Arm -->
+                                <path d="M18 66 Q4 52 8 42" stroke="#93c5fd" stroke-width="7" fill="none" stroke-linecap="round"/>
+                                <path d="M66 66 Q78 74 76 84" stroke="#93c5fd" stroke-width="7" fill="none" stroke-linecap="round"/>
+                            </g>
+
+                            <!-- Cute Python Snake -->
+                            <g transform="translate(192, 42)">
+                                <path d="M12 65 C4 65, 4 48, 18 48 L36 48 C48 48, 48 30, 34 30 L24 30 C16 30, 16 12, 28 12 C40 12, 44 22, 44 32" stroke="#3b82f6" stroke-width="14" fill="none" stroke-linecap="round"/>
+                                <path d="M16 65 C28 65, 48 65, 48 50" stroke="#fbbf24" stroke-width="10" fill="none" stroke-linecap="round"/>
+                                <circle cx="26" cy="12" r="2.2" fill="#ffffff"/>
+                                <circle cx="33" cy="12" r="2.2" fill="#ffffff"/>
+                            </g>
+
+                            <!-- 3D Floating Cube -->
+                            <g transform="translate(222, 6)">
+                                <polygon points="18,2 34,10 18,18 2,10" fill="#60a5fa"/>
+                                <polygon points="2,10 18,18 18,34 2,26" fill="#3b82f6"/>
+                                <polygon points="34,10 18,18 18,34 34,26" fill="#1d4ed8"/>
+                            </g>
+
+                            <!-- 3D Isometric Laptop -->
+                            <g transform="translate(248, 22)">
+                                <rect x="18" y="8" width="58" height="40" rx="5" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+                                <rect x="22" y="12" width="50" height="32" rx="3" fill="#0f172a"/>
+                                <rect x="26" y="17" width="22" height="3.5" rx="1.5" fill="#34d399"/>
+                                <rect x="26" y="24" width="36" height="3.5" rx="1.5" fill="#60a5fa"/>
+                                <rect x="26" y="31" width="28" height="3.5" rx="1.5" fill="#f472b6"/>
+                                <polygon points="18,48 76,48 88,66 4,66" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"/>
+                                <polygon points="36,58 56,58 58,63 34,63" fill="#94a3b8"/>
+                            </g>
+                        </svg>
                     </div>
                 </div>
             </section>
 
-            <!-- Thanh Điều Hướng 4 Phân Hệ Cổng Học Sinh -->
-            <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-                <button id="tab-tasks-btn" onclick="switchTab('tasks')" class="tab-btn active flex items-center gap-3 p-3 rounded-xl text-left transition-all">
-                    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                        <i data-lucide="book-open-check" class="w-5 h-5"></i>
-                    </div>
+            <!-- 4 THẺ ĐIỀU HƯỚNG VIỀN MÀU PASTEL + MINH HỌA 3D BÊN PHẢI CHUẨN ẢNH MẪU -->
+            <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <!-- Card 1: 34 Bài Học Tin Học 10 KNTT -->
+                <button id="tab-tasks-btn" onclick="switchTab('tasks')" class="tab-btn active bg-white rounded-2xl border-2 border-purple-300 hover:border-purple-500 p-4 flex items-center justify-between gap-3 text-left transition-all shadow-sm">
                     <div>
-                        <div class="font-bold text-xs">1. Bài Tập Theo Bài Học & Đề Giao</div>
-                        <div class="text-[11px] opacity-80">Nhiệm vụ GV giao riêng cho Lớp</div>
+                        <div class="font-black text-sm sm:text-base text-slate-900 leading-snug">1. Bài Tập Lớp Được Giao</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1">34 Bài học Tin 10 KNTT & Nhiệm vụ GV giao</div>
+                    </div>
+                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 64 64" class="w-14 h-14">
+                            <rect x="8" y="10" width="34" height="44" rx="6" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+                            <rect x="18" y="16" width="36" height="40" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                            <path d="M26 28 L32 34 L44 22" stroke="#10b981" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="25" y="42" width="22" height="4" rx="2" fill="#6366f1"/>
+                        </svg>
                     </div>
                 </button>
 
-                <button id="tab-judge-btn" onclick="switchTab('judge')" class="tab-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all text-slate-600 hover:bg-slate-100">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="terminal" class="w-5 h-5"></i>
-                    </div>
+                <!-- Card 2: Học Theo Bài Học (Lý thuyết + Bài tập Code + KT Thường xuyên + KT Định kỳ) -->
+                <button id="tab-judge-btn" onclick="switchTab('judge')" class="tab-btn bg-white rounded-2xl border-2 border-indigo-300 hover:border-indigo-500 p-4 flex items-center justify-between gap-3 text-left transition-all shadow-sm">
                     <div>
-                        <div class="font-bold text-xs">2. Phòng Luyện Code Auto-Judge</div>
-                        <div class="text-[11px] opacity-75">Python 3 • SQLite • Web DOM</div>
+                        <div class="font-black text-sm sm:text-base text-slate-900 leading-snug">2. Phòng Luyện Code Auto-Judge</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1">Học Kiến thức • Bài tập • KT Thường xuyên</div>
+                    </div>
+                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 64 64" class="w-14 h-14">
+                            <rect x="12" y="14" width="40" height="28" rx="4" fill="#1e293b" stroke="#6366f1" stroke-width="2"/>
+                            <path d="M22 25 L18 28 L22 31 M30 25 L34 28 L30 31" stroke="#38bdf8" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                            <polygon points="6,42 58,42 62,52 2,52" fill="#c7d2fe" stroke="#6366f1" stroke-width="1.5"/>
+                        </svg>
                     </div>
                 </button>
 
-                <button id="tab-exam-btn" onclick="switchTab('exam')" class="tab-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all text-slate-600 hover:bg-slate-100">
-                    <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
-                    </div>
+                <!-- Card 3: Phòng Thi Định Kỳ BGD 2025 -->
+                <button id="tab-exam-btn" onclick="switchTab('exam')" class="tab-btn bg-white rounded-2xl border-2 border-teal-300 hover:border-teal-500 p-4 flex items-center justify-between gap-3 text-left transition-all shadow-sm">
                     <div>
-                        <div class="font-bold text-xs">3. Phòng Thi Tính Giờ & Chống Copy</div>
-                        <div class="text-[11px] opacity-75">Đếm ngược • Cảnh báo trừ 0.5-1đ</div>
+                        <div class="font-black text-sm sm:text-base text-slate-900 leading-snug">3. Phòng Thi Định Kỳ BGD 2025</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1">3 phần MCQ, Đúng/Sai, Trả lời ngắn</div>
+                    </div>
+                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 64 64" class="w-14 h-14">
+                            <rect x="8" y="12" width="48" height="38" rx="6" fill="#ccfbf1" stroke="#14b8a6" stroke-width="2"/>
+                            <rect x="14" y="20" width="20" height="14" rx="3" fill="#0ea5e9"/>
+                            <text x="24" y="30" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">EXAM</text>
+                            <rect x="38" y="20" width="12" height="4" rx="2" fill="#0f766e"/>
+                            <rect x="38" y="28" width="12" height="4" rx="2" fill="#14b8a6"/>
+                            <rect x="14" y="40" width="36" height="4" rx="2" fill="#0d9488"/>
+                        </svg>
                     </div>
                 </button>
 
-                <button id="tab-analytics-btn" onclick="switchTab('analytics')" class="tab-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all text-slate-600 hover:bg-slate-100">
-                    <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                        <i data-lucide="trophy" class="w-5 h-5"></i>
-                    </div>
+                <!-- Card 4: Học Bạ Số & Bảng Vinh Danh -->
+                <button id="tab-analytics-btn" onclick="switchTab('analytics')" class="tab-btn bg-white rounded-2xl border-2 border-amber-300 hover:border-amber-500 p-4 flex items-center justify-between gap-3 text-left transition-all shadow-sm">
                     <div>
-                        <div class="font-bold text-xs">4. Học Bạ Số & Bảng Vinh Danh</div>
-                        <div class="text-[11px] opacity-75">Điểm TT22 cá nhân & Top XP Lớp</div>
+                        <div class="font-black text-sm sm:text-base text-slate-900 leading-snug">4. Học Bạ Số & Bảng Vinh Danh</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1">Điểm TT22 cá nhân & Top XP Lớp</div>
+                    </div>
+                    <div class="w-14 h-14 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 64 64" class="w-14 h-14">
+                            <path d="M20 14 H44 V28 C44 36 32 42 32 42 C32 42 20 36 20 28 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+                            <path d="M20 18 H12 V26 C12 30 16 32 20 30" fill="none" stroke="#d97706" stroke-width="2.5"/>
+                            <path d="M44 18 H52 V26 C52 30 48 32 44 30" fill="none" stroke="#d97706" stroke-width="2.5"/>
+                            <rect x="27" y="42" width="10" height="8" fill="#d97706"/>
+                            <rect x="20" y="50" width="24" height="6" rx="2" fill="#b45309"/>
+                        </svg>
                     </div>
                 </button>
             </nav>
 
-            <!-- STUDENT TAB 1: BÀI TẬP THEO BÀI HỌC & ĐỀ THI ĐƯỢC GIAO CHO LỚP -->
+            <!-- ==================================================================== -->
+            <!-- STUDENT TAB 1: GRIDVIEW 4 CỘT TOÀN BỘ 34 BÀI HỌC TIN HỌC 10 KNTT      -->
+            <!-- ==================================================================== -->
             <section id="tab-tasks" class="tab-content space-y-4">
-                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                    <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-slate-100">
+                <div class="rounded-3xl border border-blue-200/90 p-5 sm:p-6 shadow-sm space-y-4" style="background: linear-gradient(180deg, #e9f3fc 0%, #f1f7fe 100%);">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div>
-                            <span class="text-[11px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full">Giao bài theo Bài học SGK & Đề kiểm tra</span>
-                            <h2 class="text-base font-extrabold text-slate-900 mt-1">📌 Danh Sách Bài Tập Theo Bài Học & Đề Thi Giáo Viên Giao Cho Lớp</h2>
-                            <p class="text-xs text-slate-500">Hoàn thành các bài tập theo từng bài học và đề thi định kỳ bên dưới để ghi điểm tự động vào Sổ điểm TT22.</p>
+                            <span class="inline-block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider bg-white text-slate-700 border border-blue-200 px-3 py-1 rounded-full shadow-sm">
+                                OLM.VN TASK ASSIGNMENT ENGINE • SGK TIN HỌC 10 KẾT NỐI TRI THỨC (34 BÀI HỌC)
+                            </span>
+                            <h2 class="text-lg sm:text-xl font-black text-slate-900 mt-2 flex items-center gap-2">
+                                <span>📌 Danh Sách Bài Tập & Đề Thi Giáo Viên Giao Cho Lớp Của Em</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+                                Hoàn thành đầy đủ các nhiệm vụ bên dưới (Kiến thức, Bài tập thực hành, Kiểm tra thường xuyên & Kiểm tra định kỳ ngay trong từng bài học) để nâng điểm SmartScore lên 100/100 và đồng bộ điểm tự động vào Sổ điểm TT22.
+                            </p>
+                        </div>
+
+                        <!-- Ô tìm kiếm nhanh Bài học -->
+                        <div class="flex items-center gap-2 shrink-0">
+                            <div class="relative w-full sm:w-64">
+                                <input type="text" id="kntt10-search-input" oninput="onSearchKntt10Lesson(this.value)" placeholder="🔍 Tìm trong 34 bài học Tin 10..." class="w-full pl-3.5 pr-3 py-2 rounded-full bg-white border border-blue-200 text-xs font-semibold text-slate-800 shadow-sm focus:outline-none focus:border-blue-500">
+                            </div>
                         </div>
                     </div>
 
-                    <div id="olm-assigned-tasks-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                        <!-- Populated dynamically by renderStudentPortalHeaderAndTasks() -->
+                    <!-- Thanh lọc theo 6 Chủ đề SGK Tin học 10 Kết nối tri thức -->
+                    <div id="kntt10-topic-filter-bar" class="flex flex-wrap items-center gap-1.5 pt-1">
+                        <!-- Populated by renderTopicFilterPills() in kntt10-lessons.js -->
+                    </div>
+
+                    <!-- GRIDVIEW 4 CỘT HIỂN THỊ CÁC THẺ BÀI HỌC CHUẨN ẢNH MẪU -->
+                    <div id="olm-assigned-tasks-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                        <!-- Populated dynamically by renderKntt10GridView() -->
                     </div>
                 </div>
             </section>
 
-            <!-- STUDENT TAB 2: PHÒNG LUYỆN CODE AUTO-JUDGE -->
+            <!-- ==================================================================== -->
+            <!-- STUDENT TAB 2: KHÔNG GIAN HỌC TẬP TÍCH HỢP THEO BÀI HỌC (UNIFIED HUB) -->
+            <!-- Học sinh thực hiện: Kiến thức + Bài tập + KT Thường xuyên + KT Định kỳ -->
+            <!-- ==================================================================== -->
             <section id="tab-judge" class="tab-content hidden space-y-4">
-                <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 mr-1">Chương trình của Lớp:</span>
-                        <button id="track-k10-btn" onclick="switchTrack('k10')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
-                            <span>🐍 Khối 10: Lập trình Python</span>
-                        </button>
-                        <button id="track-k11-cs-btn" onclick="switchTrack('k11-cs')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
-                            <span>🗄️ Khối 11 (CS): Thuật toán & SQL</span>
-                        </button>
-                        <button id="track-k11-ict-btn" onclick="switchTrack('k11-ict')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
-                            <span>🌐 Khối 11 (ICT): Thiết kế Web HTML/CSS</span>
-                        </button>
+
+                <!-- Thanh Chọn Bài Học (1 -> 34) & 4 Chế Độ Học Tập Ngay Trong Bài Học -->
+                <div class="bg-white p-4 rounded-3xl border-2 border-indigo-200 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="switchTab('tasks')" class="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold flex items-center gap-1">
+                                <span>⬅ Quay lại GridView 34 Bài học</span>
+                            </button>
+                            <span id="lesson-hub-topic-badge" class="text-[11px] font-extrabold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Chủ đề 5: Giải quyết vấn đề với sự trợ giúp của máy tính
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="text-xs font-extrabold text-slate-700">Chuyển nhanh Bài học (SGK Tin 10 KNTT):</label>
+                            <select id="active-lesson-selector" onchange="onChangeActiveLessonDropdown(this.value)" class="bg-blue-50/70 border border-blue-300 text-slate-900 text-xs font-extrabold rounded-xl px-3 py-1.5">
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs font-semibold text-slate-600">Chọn bài tập theo Bài học:</label>
-                        <select id="problem-select" onchange="loadSelectedProblem()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-3 py-1.5">
-                        </select>
+
+                    <div class="border-t border-slate-100 pt-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div>
+                            <h2 id="lesson-hub-title" class="text-base sm:text-lg font-black text-slate-900">
+                                Bài 16: Ngôn ngữ lập trình bậc cao và Python
+                            </h2>
+                            <p id="lesson-hub-summary" class="text-xs text-slate-500 mt-0.5">
+                                Học sinh thực hiện trọn vẹn việc học: Lý thuyết trọng tâm, Bài tập thực hành, Kiểm tra thường xuyên và Kiểm tra định kỳ ngay trong bài học.
+                            </p>
+                        </div>
+
+                        <!-- 4 Nút Chuyển Chế Độ Học Tập Trong Bài Học -->
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <button type="button" id="lesson-mode-btn-KNOWLEDGE" onclick="switchLessonInnerMode('KNOWLEDGE')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">
+                                📖 1. Kiến Thức Bài Học
+                            </button>
+                            <button type="button" id="lesson-mode-btn-EXERCISE" onclick="switchLessonInnerMode('EXERCISE')" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white shadow transition-all">
+                                💻 2. Bài Tập Thực Hành
+                            </button>
+                            <button type="button" id="lesson-mode-btn-REGULAR_QUIZ" onclick="switchLessonInnerMode('REGULAR_QUIZ')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">
+                                ⚡ 3. Kiểm Tra Thường Xuyên
+                            </button>
+                            <button type="button" id="lesson-mode-btn-PERIODIC_LINK" onclick="switchLessonInnerMode('PERIODIC_LINK')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">
+                                📝 4. Kiểm Tra Định Kỳ
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                    <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
-                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                            <div class="flex items-center gap-2">
-                                <span id="prob-badge-diff" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Nhận biết</span>
-                                <span id="prob-badge-cat" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Bài học SGK</span>
-                                <span id="prob-badge-type" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">ALGORITHM</span>
-                            </div>
-                            <span id="prob-badge-comp" class="text-[11px] font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">NLc</span>
-                        </div>
-
-                        <div>
-                            <h2 id="prob-title" class="text-lg font-bold text-slate-900 mb-2">Đang tải đề bài...</h2>
-                            <p id="prob-desc" class="text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 text-xs space-y-2">
-                            <div class="font-bold text-slate-700">📌 Đặc tả Đầu vào / Đầu ra:</div>
-                            <div id="prob-io-format" class="text-slate-600 leading-relaxed"></div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-900 text-slate-100 p-3 rounded-xl font-mono">
-                                <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Dữ liệu vào mẫu (Input)</div>
-                                <pre id="prob-sample-in" class="text-emerald-400 whitespace-pre-wrap"></pre>
-                            </div>
-                            <div class="bg-slate-900 text-slate-100 p-3 rounded-xl font-mono">
-                                <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Kết quả mẫu (Output)</div>
-                                <pre id="prob-sample-out" class="text-amber-300 whitespace-pre-wrap"></pre>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 border-t border-slate-100">
-                            <button onclick="toggleHint()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5">
-                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
-                                <span>Xem gợi ý từng bước (Step-by-step Hint chuẩn OLM)</span>
+                <!-- ================================================================ -->
+                <!-- SUB-PANEL 1: KIẾN THỨC TRỌNG TÂM THEO BÀI HỌC (KNOWLEDGE)         -->
+                <!-- ================================================================ -->
+                <div id="lesson-mode-panel-KNOWLEDGE" class="hidden bg-white rounded-3xl border-2 border-blue-200 p-6 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <span class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                            📖 Lý thuyết & Kiến thức cốt lõi theo Bài học SGK Kết nối tri thức
+                        </span>
+                        <span class="text-xs text-slate-500 font-semibold">Giáo viên biên soạn & cập nhật trực tiếp</span>
+                    </div>
+                    <div id="lesson-knowledge-body" class="prose max-w-none text-sm text-slate-700 leading-relaxed space-y-2">
+                        <!-- Populated by openUnifiedLessonHub() -->
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                        <span class="text-xs text-slate-500">Sau khi nắm vững kiến thức, hãy chuyển sang làm Bài tập thực hành hoặc Bài kiểm tra thường xuyên của bài học:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="switchLessonInnerMode('EXERCISE')" class="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow">
+                                💻 Sang Làm Bài Tập Thực Hành ➔
                             </button>
-                            <div id="hint-box" class="hidden mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
-                                <strong>💡 Hướng dẫn tư duy:</strong> <span id="hint-text"></span>
-                            </div>
+                            <button type="button" onclick="switchLessonInnerMode('REGULAR_QUIZ')" class="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow">
+                                ⚡ Làm Bài Kiểm Tra Thường Xuyên (15p) ➔
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================================ -->
+                <!-- SUB-PANEL 2: BÀI TẬP THỰC HÀNH THEO BÀI HỌC (EXERCISE / JUDGE)    -->
+                <!-- ================================================================ -->
+                <div id="lesson-mode-panel-EXERCISE" class="space-y-4">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 mr-1">Chương trình của Lớp:</span>
+                            <button id="track-k10-btn" onclick="switchTrack('k10')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
+                                <span>🐍 Khối 10: Lập trình Python</span>
+                            </button>
+                            <button id="track-k11-cs-btn" onclick="switchTrack('k11-cs')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                                <span>🗄️ Khối 11 (CS): Thuật toán & SQL</span>
+                            </button>
+                            <button id="track-k11-ict-btn" onclick="switchTrack('k11-ict')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                                <span>🌐 Khối 11 (ICT): Thiết kế Web HTML/CSS</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-600">Bài tập thuộc Bài học:</label>
+                            <select id="problem-select" onchange="loadSelectedProblem()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-3 py-1.5">
+                            </select>
                         </div>
                     </div>
 
-                    <div class="lg:col-span-7 flex flex-col gap-4">
-                        <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg overflow-hidden">
-                            <div class="bg-slate-800/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-                                    <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                                    <span id="editor-lang-label" class="ml-2 text-xs font-mono text-slate-300">Python 3 (Pyodide WASM)</span>
+                                    <span id="prob-badge-diff" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Nhận biết</span>
+                                    <span id="prob-badge-cat" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Bài học SGK</span>
+                                    <span id="prob-badge-type" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">ALGORITHM</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="resetStarterCode()" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs">Khôi phục mẫu</button>
-                                    <button onclick="runCustomTest()" class="px-3 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">▶ Chạy thử</button>
-                                    <button onclick="submitSolution()" class="px-3.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">✔ Nộp bài & Chấm tự động</button>
+                                <span id="prob-badge-comp" class="text-[11px] font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">NLc</span>
+                            </div>
+
+                            <div>
+                                <h2 id="prob-title" class="text-lg font-bold text-slate-900 mb-2">Đang tải đề bài...</h2>
+                                <p id="prob-desc" class="text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 text-xs space-y-2">
+                                <div class="font-bold text-slate-700">📌 Đặc tả Đầu vào / Đầu ra:</div>
+                                <div id="prob-io-format" class="text-slate-600 leading-relaxed"></div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div class="bg-slate-900 text-slate-100 p-3 rounded-xl font-mono">
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Dữ liệu vào mẫu (Input)</div>
+                                    <pre id="prob-sample-in" class="text-emerald-400 whitespace-pre-wrap"></pre>
+                                </div>
+                                <div class="bg-slate-900 text-slate-100 p-3 rounded-xl font-mono">
+                                    <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Kết quả mẫu (Output)</div>
+                                    <pre id="prob-sample-out" class="text-amber-300 whitespace-pre-wrap"></pre>
                                 </div>
                             </div>
 
-                            <div class="p-4">
-                                <textarea id="code-editor" rows="11" spellcheck="false" class="w-full bg-slate-950 text-emerald-300 code-font text-sm p-4 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+                            <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                                <button onclick="toggleHint()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5">
+                                    <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                    <span>Xem gợi ý từng bước</span>
+                                </button>
+                                <button type="button" onclick="switchLessonInnerMode('REGULAR_QUIZ')" class="text-xs font-extrabold text-emerald-700 hover:underline">
+                                    ⚡ Sang làm KT Thường xuyên của bài học ➔
+                                </button>
                             </div>
-
-                            <div id="custom-input-row" class="px-4 pb-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                                <div class="md:col-span-1">
-                                    <label class="block text-slate-400 mb-1 font-medium">Custom Input (Stdin):</label>
-                                    <textarea id="custom-input" rows="2" class="w-full bg-slate-950 text-slate-200 code-font p-2.5 rounded-lg border border-slate-800"></textarea>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-slate-400 mb-1 font-medium">Kết quả thực thi (Stdout / SQL Table):</label>
-                                    <pre id="stdout-console" class="w-full h-[54px] overflow-auto bg-slate-950 text-slate-200 code-font p-2.5 rounded-lg border border-slate-800">Chưa có kết quả thực thi.</pre>
-                                </div>
+                            <div id="hint-box" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                                <strong>💡 Hướng dẫn tư duy:</strong> <span id="hint-text"></span>
                             </div>
                         </div>
 
-                        <div id="web-preview-card" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                            <div class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">🌐 Khung Xem Trước Giao Diện Web Trực Tiếp (HTML5/CSS3 DOM Preview)</div>
-                            <iframe id="web-preview-iframe" class="w-full h-44 rounded-xl border border-slate-200 bg-white"></iframe>
-                        </div>
+                        <div class="lg:col-span-7 flex flex-col gap-4">
+                            <div class="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg overflow-hidden">
+                                <div class="bg-slate-800/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                                        <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                        <span id="editor-lang-label" class="ml-2 text-xs font-mono text-slate-300">Python 3 (Pyodide WASM)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="resetStarterCode()" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs">Khôi phục mẫu</button>
+                                        <button onclick="runCustomTest()" class="px-3 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold">▶ Chạy thử</button>
+                                        <button onclick="submitSolution()" class="px-3.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow">✔ Nộp bài & Chấm tự động</button>
+                                    </div>
+                                </div>
 
-                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Bảng Chấm Test Cases & Giải Thích Từng Bước</h3>
-                                <span id="judge-verdict-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">Chưa nộp bài</span>
+                                <div class="p-4">
+                                    <textarea id="code-editor" rows="11" spellcheck="false" class="w-full bg-slate-950 text-emerald-300 code-font text-sm p-4 rounded-xl border border-slate-800 focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+                                </div>
+
+                                <div id="custom-input-row" class="px-4 pb-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                    <div class="md:col-span-1">
+                                        <label class="block text-slate-400 mb-1 font-medium">Custom Input (Stdin):</label>
+                                        <textarea id="custom-input" rows="2" class="w-full bg-slate-950 text-slate-200 code-font p-2.5 rounded-lg border border-slate-800"></textarea>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-slate-400 mb-1 font-medium">Kết quả thực thi (Stdout / SQL Table):</label>
+                                        <pre id="stdout-console" class="w-full h-[54px] overflow-auto bg-slate-950 text-slate-200 code-font p-2.5 rounded-lg border border-slate-800">Chưa có kết quả thực thi.</pre>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="testcases-container" class="space-y-2">
-                                <div class="text-xs text-slate-400 italic">Nhấn "Nộp bài & Chấm tự động" để chạy bộ Test Cases.</div>
+
+                            <div id="web-preview-card" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                                <div class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">🌐 Khung Xem Trước Giao Diện Web Trực Tiếp (HTML5/CSS3 DOM Preview)</div>
+                                <iframe id="web-preview-iframe" class="w-full h-44 rounded-xl border border-slate-200 bg-white"></iframe>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Bảng Chấm Test Cases & Giải Thích Từng Bước</h3>
+                                    <span id="judge-verdict-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600">Chưa nộp bài</span>
+                                </div>
+                                <div id="testcases-container" class="space-y-2">
+                                    <div class="text-xs text-slate-400 italic">Nhấn "Nộp bài & Chấm tự động" để chạy bộ Test Cases.</div>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ================================================================ -->
+                <!-- SUB-PANEL 3: BÀI KIỂM TRA THƯỜNG XUYÊN (15 PHÚT) THEO BÀI HỌC     -->
+                <!-- ================================================================ -->
+                <div id="lesson-mode-panel-REGULAR_QUIZ" class="hidden bg-white rounded-3xl border-2 border-emerald-300 p-6 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="text-xs font-extrabold uppercase px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                                ⚡ Đánh Giá Thường Xuyên (ĐĐGtx - 15 Phút) Theo Bài Học
+                            </span>
+                            <h3 class="text-base sm:text-lg font-black text-slate-900 mt-2">
+                                Bài Kiểm Tra Thường Xuyên Trực Tiếp Trong Bài Học
+                            </h3>
+                            <p class="text-xs text-slate-500">
+                                Điểm số sau khi nộp sẽ tự động ghi nhận vào cột điểm Thường xuyên (TX1) trên Sổ điểm điện tử TT22 và Google Sheets.
+                            </p>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-2xl text-center">
+                            <div class="text-[10px] uppercase font-bold text-emerald-700">Kết quả ĐĐGtx</div>
+                            <div id="lesson-regular-quiz-score" class="text-base font-black text-emerald-900">Chưa nộp bài</div>
+                        </div>
+                    </div>
+
+                    <div id="lesson-regular-quiz-container" class="space-y-4">
+                        <!-- Populated by renderLessonRegularQuiz() -->
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                        <button type="button" onclick="switchLessonInnerMode('EXERCISE')" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+                            ⬅ Quay lại Bài tập thực hành
+                        </button>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="submitLessonRegularQuiz()" class="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold shadow-md">
+                                ✔ Nộp Bài Kiểm Tra Thường Xuyên & Ghi Điểm TX1
+                            </button>
+                            <button type="button" onclick="switchLessonInnerMode('PERIODIC_LINK')" class="px-4 py-2.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-extrabold">
+                                📝 Sang Kiểm Tra Định Kỳ ➔
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================================ -->
+                <!-- SUB-PANEL 4: BÀI KIỂM TRA ĐỊNH KỲ (GIAO THEO KHỐI, LỚP) TRONG BÀI -->
+                <!-- ================================================================ -->
+                <div id="lesson-mode-panel-PERIODIC_LINK" class="hidden bg-white rounded-3xl border-2 border-indigo-300 p-6 shadow-sm space-y-4">
+                    <div id="lesson-periodic-exam-card">
+                        <!-- Populated by renderStudentPortalHeaderAndTasks() -->
                     </div>
                 </div>
             </section>
@@ -859,11 +1137,144 @@
                 </div>
 
                 <!-- ================================================================ -->
-                <!-- TEACHER PANEL 2: GIAO BÀI TẬP THEO BÀI HỌC & ĐIỀU KHIỂN ĐỀ THI   -->
+                <!-- TEACHER PANEL 2: SOẠN BÀI HỌC (KIẾN THỨC, BÀI TẬP, KT THƯỜNG XUYÊN) -->
+                <!-- & GIAO BÀI KIỂM TRA ĐỊNH KỲ THEO KHỐI, LỚP                        -->
                 <!-- ================================================================ -->
                 <div id="admin-panel-curriculum" class="admin-subpanel hidden space-y-6">
 
-                    <!-- KHỐI A & B: GIAO BÀI TẬP THEO BÀI HỌC + MỞ / GIAO / KHÓA ĐỀ THI & CẤU HÌNH THỜI GIAN, TRỪ ĐIỂM -->
+                    <!-- KHỐI 0 (MỚI): STUDIO GIÁO VIÊN SOẠN KIẾN THỨC, BÀI TẬP & BÀI KIỂM TRA THƯỜNG XUYÊN THEO TỪNG BÀI HỌC (34 BÀI TIN 10 KNTT) -->
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 rounded-2xl border-2 border-indigo-300 space-y-5 shadow-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-100 pb-3">
+                            <div>
+                                <span class="text-[11px] font-extrabold uppercase px-3 py-0.5 rounded-full bg-indigo-600 text-white">
+                                    Teacher Lesson Studio • 34 Bài Học Tin Học 10 Kết Nối Tri Thức
+                                </span>
+                                <h3 class="text-base sm:text-lg font-black text-slate-900 mt-1.5">
+                                    ✍️ 1. Giáo Viên Soạn Theo Bài Học: Kiến Thức Trọng Tâm • Bài Tập Thực Hành • Bài Kiểm Tra Thường Xuyên
+                                </h3>
+                                <p class="text-xs text-slate-600">
+                                    Chọn bất kỳ Bài học nào trong 34 Bài học Tin học 10 Kết nối tri thức để biên soạn Lý thuyết, Bài tập Auto-Judge và Câu hỏi Kiểm tra thường xuyên (15 phút). Học sinh bấm vào bài học trên GridView sẽ học và làm bài ngay lập tức.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Chọn Bài học trong 34 Bài Tin 10 KNTT -->
+                        <div class="bg-white p-3.5 rounded-xl border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <label class="text-xs font-extrabold text-indigo-950 shrink-0">📘 Chọn Bài học cần biên soạn (Bài 1 ➔ Bài 34):</label>
+                            <select id="teacher-author-lesson-select" onchange="onSelectLessonForTeacherAuthoring()" class="w-full sm:w-2/3 px-3 py-2 text-xs border-2 border-indigo-300 rounded-xl bg-indigo-50/50 font-extrabold text-indigo-950">
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                            <!-- Cột trái (7 cols): Soạn Kiến thức theo bài học + Soạn Bài tập theo bài học -->
+                            <div class="lg:col-span-7 bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                                <div class="font-extrabold text-xs uppercase text-indigo-700 border-b border-slate-100 pb-2">
+                                    📖 A. Soạn Kiến Thức Theo Bài Học & 💻 B. Soạn Bài Tập Theo Bài Học
+                                </div>
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Tóm tắt mục tiêu bài học (Hiển thị trên thẻ GridView):</label>
+                                    <input type="text" id="teacher-lesson-summary" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Nội dung Kiến thức trọng tâm theo bài học (Hỗ trợ HTML / Văn bản):</label>
+                                    <textarea id="teacher-lesson-knowledge" rows="4" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg code-font"></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                    <div class="sm:col-span-2">
+                                        <label class="text-[11px] font-bold text-slate-700 block mb-1">Tên Bài tập thực hành của Bài học:</label>
+                                        <input type="text" id="teacher-ex-title" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-700 block mb-1">Mức độ nhận thức:</label>
+                                        <select id="teacher-ex-diff" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-slate-50 font-bold">
+                                            <option value="Nhận biết">Nhận biết</option>
+                                            <option value="Thông hiểu">Thông hiểu</option>
+                                            <option value="Vận dụng">Vận dụng</option>
+                                            <option value="Vận dụng cao">Vận dụng cao</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Yêu cầu đề bài tập thực hành:</label>
+                                    <textarea id="teacher-ex-desc" rows="2" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg"></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-700 block mb-1">Input mẫu (Test case):</label>
+                                        <input type="text" id="teacher-ex-in" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg code-font">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-700 block mb-1">Output chuẩn (Test case):</label>
+                                        <input type="text" id="teacher-ex-out" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg code-font">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-700 block mb-1">Code mẫu khởi tạo (Python 3 Starter Code):</label>
+                                    <textarea id="teacher-ex-code" rows="3" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg code-font bg-slate-950 text-emerald-300"></textarea>
+                                </div>
+
+                                <button type="button" onclick="saveTeacherLessonContentAndExercise()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold shadow flex items-center justify-center gap-2">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    <span>💾 Lưu Kiến Thức & Bài Tập Của Bài Học Này</span>
+                                </button>
+                            </div>
+
+                            <!-- Cột phải (5 cols): Soạn Bài Kiểm Tra Thường Xuyên (15 phút) Theo Bài Học -->
+                            <div class="lg:col-span-5 bg-white p-4 rounded-xl border border-emerald-200 space-y-3 flex flex-col justify-between">
+                                <div class="space-y-3">
+                                    <div class="font-extrabold text-xs uppercase text-emerald-700 border-b border-slate-100 pb-2">
+                                        ⚡ C. Soạn Bài Kiểm Tra Thường Xuyên (ĐĐGtx) Theo Bài Học
+                                    </div>
+
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-700 block mb-1">Danh sách câu hỏi Kiểm tra thường xuyên hiện có của bài học:</label>
+                                        <div id="teacher-lesson-regquiz-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                            <!-- Populated by renderTeacherLessonRegularQuizList() -->
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                                        <div class="text-xs font-extrabold text-slate-800">➕ Thêm câu hỏi Kiểm tra thường xuyên mới vào bài học này:</div>
+                                        <input type="text" id="teacher-regq-text" placeholder="Nhập nội dung câu hỏi trắc nghiệm thường xuyên..." class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="text" id="teacher-regq-a" placeholder="Phương án A" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                            <input type="text" id="teacher-regq-b" placeholder="Phương án B" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                            <input type="text" id="teacher-regq-c" placeholder="Phương án C" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                            <input type="text" id="teacher-regq-d" placeholder="Phương án D" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <label class="text-[10px] font-bold text-slate-600 block">Đáp án đúng:</label>
+                                                <select id="teacher-regq-ans" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg font-bold bg-emerald-50">
+                                                    <option value="0">Đáp án A</option>
+                                                    <option value="1">Đáp án B</option>
+                                                    <option value="2">Đáp án C</option>
+                                                    <option value="3">Đáp án D</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <label class="text-[10px] font-bold text-slate-600 block">Giải thích đáp án:</label>
+                                                <input type="text" id="teacher-regq-exp" placeholder="Giải thích ngắn gọn..." class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" onclick="addTeacherRegularQuizQuestionToLesson()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow flex items-center justify-center gap-1.5">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                    <span>➕ Thêm Câu Hỏi Kiểm Tra Thường Xuyên Vào Bài Học</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI A & B: GIAO BÀI TẬP THEO BÀI HỌC + GIAO BÀI KIỂM TRA ĐỊNH KỲ THEO KHỐI, LỚP -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                         <!-- KHỐI A (6 cols): GIAO BÀI TẬP THEO BÀI HỌC SGK CHO LỚP -->
@@ -872,9 +1283,9 @@
                                 <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-indigo-600 text-white">OLM Lesson Assignment</span>
                                 <span class="text-xs font-semibold text-slate-500">Theo SGK Kết nối tri thức</span>
                             </div>
-                            <h3 class="text-base font-extrabold text-slate-900">📚 1. Giao Bài Tập Theo Bài Học Cho Từng Lớp / Khối</h3>
+                            <h3 class="text-base font-extrabold text-slate-900">📚 2. Giao Bài Học & Bài Tập Cho Từng Lớp / Khối</h3>
                             <p class="text-xs text-slate-600">
-                                Chọn Lớp học, đánh dấu các <strong>Bài học & Bài tập thực hành</strong> muốn giao cho lớp đó và đặt hạn nộp. Học sinh đăng nhập vào lớp sẽ nhận đúng các bài học này.
+                                Chọn Lớp học, đánh dấu các <strong>Bài học & Bài tập thực hành</strong> muốn giao cho lớp đó và đặt hạn nộp. Học sinh đăng nhập vào lớp sẽ thấy nhãn <code>🏆 Bài giao cần làm</code> trên GridView.
                             </p>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -890,7 +1301,7 @@
                             </div>
 
                             <div>
-                                <label class="text-xs font-bold text-slate-700 block mb-2">Danh mục Bài học & Bài tập thuộc chương trình của Lớp:</label>
+                                <label class="text-xs font-bold text-slate-700 block mb-2">Danh mục 34 Bài học & Bài tập thuộc chương trình của Lớp:</label>
                                 <div id="assign-lesson-checklist" class="space-y-2 max-h-60 overflow-y-auto pr-1">
                                     <!-- Populated via renderLessonAssignmentManager() -->
                                 </div>
@@ -902,38 +1313,46 @@
                             </button>
                         </div>
 
-                        <!-- KHỐI B (6 cols): MỞ ĐỀ THI, GIAO ĐỀ THI, KHÓA ĐỀ THI & CẤU HÌNH THỜI GIAN + TRỪ ĐIỂM VI PHẠM -->
+                        <!-- KHỐI B (6 cols): SOẠN & GIAO BÀI KIỂM TRA ĐỊNH KỲ THEO KHỐI, LỚP -->
                         <div class="lg:col-span-6 bg-gradient-to-br from-emerald-50/80 via-white to-indigo-50/80 p-5 rounded-2xl border-2 border-emerald-300 space-y-4 shadow-sm">
                             <div class="flex items-center justify-between">
-                                <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">Proctored Exam Controller</span>
-                                <span class="text-xs font-bold text-emerald-800">Chống Copy & Chuyển Tab</span>
+                                <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">Periodic Exam By Grade & Class</span>
+                                <span class="text-xs font-bold text-emerald-800">Giao theo Khối, Lớp • Chống Copy</span>
                             </div>
-                            <h3 class="text-base font-extrabold text-slate-900">📝 2. Giao Đề Thi • Mở Đề Thi • Khóa Đề Thi & Cấu Hình Giám Sát</h3>
+                            <h3 class="text-base font-extrabold text-slate-900">📝 3. Bài Kiểm Tra Định Kỳ: Giao Theo Khối, Lớp • Mở / Khóa Đề Thi</h3>
                             <p class="text-xs text-slate-600">
-                                Định trước <strong>thời gian làm bài (phút)</strong>, bật chế độ <strong>chống sao chép / chuyển tab</strong> và cấu hình <strong>mức trừ điểm tự động từ 0.5 đến 1.0 điểm</strong> tùy mức độ vi phạm.
+                                Bài kiểm tra định kỳ (Giữa kỳ / Cuối kỳ) được Giáo viên <strong>giao theo Khối (10, 11) và Lớp</strong>, định trước <strong>thời gian đếm ngược</strong> và trừ điểm tự động từ <strong>0.5 đến 1.0 điểm</strong> khi sao chép / chuyển tab.
                             </p>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-700 block mb-1">1. Chọn Lớp áp dụng Đề thi:</label>
-                                    <select id="exam-cfg-class-select" onchange="onChangeExamConfigClassSelect()" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-bold text-indigo-950">
-                                        <option value="ALL">Tất cả các lớp (Khối 10 & 11)</option>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">1. Chọn Khối giao đề:</label>
+                                    <select id="exam-cfg-grade-select" onchange="onChangeExamConfigGradeFilter()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-xl bg-white font-extrabold text-indigo-950">
+                                        <option value="ALL">Cả Khối 10 & 11</option>
+                                        <option value="10">Khối 10</option>
+                                        <option value="11">Khối 11</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-700 block mb-1">2. Thời gian làm bài (Phút):</label>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">2. Chọn Lớp nhận đề:</label>
+                                    <select id="exam-cfg-class-select" onchange="onChangeExamConfigClassSelect()" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-xl bg-white font-bold text-indigo-950">
+                                        <option value="ALL">Tất cả các lớp</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">3. Thời gian (Phút):</label>
                                     <input type="number" id="exam-cfg-duration" min="5" max="180" value="45" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-mono font-extrabold text-indigo-700">
                                 </div>
                             </div>
 
                             <div>
-                                <label class="text-xs font-bold text-slate-700 block mb-1">3. Tên Đề thi / Kỳ kiểm tra giao cho học sinh:</label>
+                                <label class="text-xs font-bold text-slate-700 block mb-1">4. Tên Đề kiểm tra định kỳ giao cho Khối / Lớp:</label>
                                 <input type="text" id="exam-cfg-title" value="Đề Kiểm Tra Định Kỳ Chuẩn Cấu Trúc Bộ GD&ĐT 2025" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold">
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-700 block mb-1">4. Mức trừ điểm khi Copy / Chuyển Tab:</label>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">5. Mức trừ điểm khi Copy / Chuyển Tab:</label>
                                     <select id="exam-cfg-penalty" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-xl bg-white font-bold text-rose-700">
                                         <option value="TIERED">Theo mức độ: Lần 1 trừ 0.5đ • Từ lần 2 trừ 1.0đ/lần</option>
                                         <option value="FIXED_05">Mức nhẹ cố định: Trừ 0.5 điểm / mỗi lần vi phạm</option>
@@ -941,7 +1360,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-700 block mb-1">5. Số lần vi phạm tối đa (Tự thu bài):</label>
+                                    <label class="text-xs font-bold text-slate-700 block mb-1">6. Số lần vi phạm tối đa (Tự thu bài):</label>
                                     <select id="exam-cfg-max-violations" class="w-full px-2.5 py-2 text-xs border border-slate-300 rounded-xl bg-white font-bold text-slate-800">
                                         <option value="3">3 lần vi phạm ➔ Tự động thu bài</option>
                                         <option value="2">2 lần vi phạm ➔ Tự động thu bài</option>
@@ -953,11 +1372,11 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                                 <button type="button" onclick="saveAndDispatchExamToClass(true)" class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow flex items-center justify-center gap-1.5">
                                     <i data-lucide="unlock" class="w-4 h-4"></i>
-                                    <span>📤 Giao Đề & 🔓 Mở Đề Thi Ngay</span>
+                                    <span>📤 Giao Đề Theo Khối/Lớp & 🔓 Mở Đề</span>
                                 </button>
                                 <button type="button" onclick="saveAndDispatchExamToClass(false)" class="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold shadow flex items-center justify-center gap-1.5">
                                     <i data-lucide="lock" class="w-4 h-4"></i>
-                                    <span>🔒 Khóa Đề Thi Đối Với Lớp</span>
+                                    <span>🔒 Khóa Đề Thi Đối Với Khối/Lớp</span>
                                 </button>
                             </div>
                         </div>
@@ -1269,10 +1688,11 @@
         </div>
     </footer>
 
-    <!-- EXTERNAL MODULES: AUTOMATED GOOGLE SHEETS PIPELINE, ADMIN COCKPIT & RBAC/IMPORTER -->
+    <!-- EXTERNAL MODULES: AUTOMATED GOOGLE SHEETS PIPELINE, ADMIN COCKPIT, RBAC/IMPORTER & 34 KNTT10 LESSONS -->
     <script src="assets/js/gsheets-sync.js"></script>
     <script src="assets/js/admin-cockpit.js"></script>
     <script src="assets/js/auth-and-importer.js"></script>
+    <script src="assets/js/kntt10-lessons.js"></script>
 
     <!-- CORE APPLICATION SCRIPT -->
     <script>
@@ -1465,6 +1885,9 @@
         window.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons();
             await loadGitHubDataFiles();
+            if (typeof initKntt10LessonsDatabase === 'function') {
+                initKntt10LessonsDatabase();
+            }
             renderExamQuestions();
             renderFlashcards();
             initRadarChart();
