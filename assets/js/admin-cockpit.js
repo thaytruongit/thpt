@@ -96,8 +96,26 @@ async function loadGitHubDataFiles() {
 
     renderActiveStudentSelector();
     loadProblemList();
-    renderGradebookTable();
-    renderAdminAllViews();
+
+    // Khôi phục Đề thi đã nạp từ DOCX/XLSX nếu có
+    const savedExam = localStorage.getItem('thpt_custom_exam_v2');
+    if (savedExam) {
+        try {
+            const parsedExam = JSON.parse(savedExam);
+            if (parsedExam.part1) EXAM_DATA.part1 = parsedExam.part1;
+            if (parsedExam.part2) EXAM_DATA.part2 = parsedExam.part2;
+            if (parsedExam.part3) EXAM_DATA.part3 = parsedExam.part3;
+            if (typeof renderExamQuestions === 'function') renderExamQuestions();
+        } catch (e) {}
+    }
+
+    // Khởi chạy hệ thống Đăng nhập & Phân quyền RBAC
+    if (typeof initAuthSystem === 'function') {
+        initAuthSystem();
+    } else {
+        renderGradebookTable();
+        renderAdminAllViews();
+    }
 }
 
 function saveRosterToStorage() {

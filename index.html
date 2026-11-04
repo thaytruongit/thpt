@@ -45,6 +45,9 @@
     <!-- SQL.js (SQLite WASM in Browser) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
 
+    <!-- Mammoth.js (DOCX Word Parser in Browser) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -69,6 +72,85 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- ================= TRANG ĐĂNG NHẬP & PHÂN QUYỀN (RBAC LOGIN PORTAL) ================= -->
+    <div id="auth-login-overlay" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white text-center">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 mx-auto flex items-center justify-center text-2xl font-black mb-2">
+                    IT
+                </div>
+                <h2 class="text-lg font-extrabold">ĐĂNG NHẬP HỆ THỐNG TIN HỌC THPT</h2>
+                <p class="text-xs text-indigo-100 mt-0.5">Phân quyền chức năng riêng biệt Giáo viên & Học sinh</p>
+            </div>
+
+            <div class="p-6">
+                <!-- Role Switcher Tabs -->
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-xl mb-5">
+                    <button type="button" id="login-tab-student-btn" onclick="switchLoginRoleTab('STUDENT')" class="flex-1 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow transition-all">
+                        👨‍🎓 Tài Khoản Học Sinh
+                    </button>
+                    <button type="button" id="login-tab-teacher-btn" onclick="switchLoginRoleTab('TEACHER')" class="flex-1 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">
+                        👨‍🏫 Tài Khoản Giáo Viên
+                    </button>
+                </div>
+
+                <!-- Error Banner -->
+                <div id="login-error-msg" class="hidden mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold"></div>
+
+                <!-- FORM 1: HỌC SINH ĐĂNG NHẬP -->
+                <form id="login-form-student" onsubmit="handleStudentLoginSubmit(event)" class="space-y-3.5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 block mb-1">Chọn nhanh tên trong danh sách lớp (Phòng máy):</label>
+                        <select id="login-student-select" onchange="onSelectStudentQuickLogin(this.value)" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-slate-50 font-semibold text-slate-800">
+                            <option value="">-- Chọn học sinh --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Mã Học Sinh:</label>
+                        <input type="text" id="login-stu-id" required placeholder="VD: HS1001, HS1101..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-lg font-bold uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Mã PIN / Mật khẩu:</label>
+                        <input type="password" id="login-stu-pin" required placeholder="Nhập mã PIN 4 số (VD: 1111)" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                        ĐĂNG NHẬP VÀO KHÔNG GIAN HỌC TẬP
+                    </button>
+                    <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        💡 <strong>Quyền Học sinh:</strong> Làm bài Code Auto-Judge, thi trắc nghiệm BGD 2025, tích lũy XP và chỉ xem Sổ điểm TT22 của cá nhân mình.
+                    </div>
+                </form>
+
+                <!-- FORM 2: GIÁO VIÊN ĐĂNG NHẬP -->
+                <form id="login-form-teacher" onsubmit="handleTeacherLoginSubmit(event)" class="hidden space-y-3.5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Tài khoản Giáo viên / Quản trị:</label>
+                        <input type="text" id="login-tea-user" placeholder="thaytruongit hoặc admin" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-lg font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 block mb-1">Mật khẩu Quản trị:</label>
+                        <input type="password" id="login-tea-pass" placeholder="Nhập mật khẩu (Mặc định: 123456)" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+                        ĐĂNG NHẬP QUYỀN GIÁO VIÊN QUẢN TRỊ
+                    </button>
+                    <div class="text-[11px] text-slate-500 bg-indigo-50/60 p-2.5 rounded-lg border border-indigo-100">
+                        🔑 <strong>Quyền Giáo viên:</strong> Toàn quyền điều khiển phòng máy 45 máy, nạp đề thi từ Word (<code>.docx</code>) / Excel (<code>.xlsx</code>), chỉnh sửa Sổ điểm TT22 và đồng bộ Google Sheets.
+                    </div>
+                </form>
+
+                <!-- Quick Demo Login Bar -->
+                <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-[11px] text-slate-500">
+                    <span>Điền nhanh tài khoản mẫu:</span>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="fillQuickDemoLogin('STUDENT')" class="px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100">Mẫu Học sinh</button>
+                        <button type="button" onclick="fillQuickDemoLogin('TEACHER')" class="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100">Mẫu Giáo viên</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- FOCUS MODE OVERLAY (KHI GIÁO VIÊN KHÓA MÀN HÌNH PHÒNG MÁY) -->
     <div id="student-focus-lock-overlay" class="hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center">
@@ -109,15 +191,26 @@
                 </div>
             </div>
 
-            <!-- Active Student Switcher, Cloud Status & Gamification -->
+            <!-- Active Student Switcher, Role Badge, Cloud Status & Gamification -->
             <div class="flex flex-wrap items-center gap-2">
-                <!-- Student Account Selector -->
-                <select id="active-student-select" onchange="onSwitchActiveStudent(this.value)" class="bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Tài khoản học sinh đang làm bài">
-                    <!-- Populated via JS -->
-                </select>
+                <!-- Role Badge -->
+                <span id="header-role-badge" class="text-xs px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1">
+                    👨‍🏫 Giáo viên
+                </span>
+
+                <!-- Teacher Student Switcher (Visible only to Teacher) -->
+                <div id="teacher-student-switcher-wrap">
+                    <select id="active-student-select" onchange="onSwitchActiveStudent(this.value)" class="bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Giáo viên chọn xem học sinh">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+
+                <!-- Student Locked Identity Badge (Visible only to Student) -->
+                <div id="student-locked-identity-badge" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                </div>
 
                 <!-- Auto-Sync Indicator -->
-                <div id="cloud-sync-indicator" onclick="switchTab('admin'); switchAdminSubTab('cloud');" class="cursor-pointer text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5" title="Trạng thái tự động đồng bộ Google Sheets">
+                <div id="cloud-sync-indicator" class="text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5" title="Trạng thái tự động đồng bộ Google Sheets">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Auto-Sync: Bật
                 </div>
 
@@ -130,6 +223,11 @@
                 <div class="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
                     <span>🔥</span> <span id="header-streak">6</span>
                 </div>
+
+                <!-- Logout / Switch Account Button -->
+                <button onclick="logoutCurrentSession()" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1 transition-all" title="Đăng xuất hoặc đổi tài khoản">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Đổi TK
+                </button>
 
                 <!-- Fullscreen Toggle -->
                 <button onclick="toggleFullscreen()" class="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-100" title="Toàn màn hình">
@@ -393,9 +491,9 @@
                     <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
                         <div>
                             <h3 class="font-bold text-slate-900 text-base">Bảng Tổng Hợp Điểm Thông Tư 22/2021/TT-BGDĐT</h3>
-                            <p class="text-xs text-slate-500">Tự động cập nhật khi học sinh nộp bài Code hoặc Đề thi</p>
+                            <p id="gradebook-role-subtitle" class="text-xs text-slate-500">Tự động cập nhật khi học sinh nộp bài Code hoặc Đề thi</p>
                         </div>
-                        <div class="flex gap-2">
+                        <div id="teacher-only-gradebook-actions" class="flex gap-2">
                             <button onclick="triggerFullCloudSyncNow()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm">
                                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Đồng bộ Google Sheets
                             </button>
@@ -436,7 +534,7 @@
                         <h2 class="text-xl font-bold mb-1">📚 Kho Học Liệu Chuẩn Hóa & Flashcards Ôn Tập</h2>
                         <p class="text-xs text-indigo-100">Lưu trữ trực tiếp tại thư mục <code>data/*.json</code> trên GitHub để học sinh toàn trường tải tức thì.</p>
                     </div>
-                    <div class="flex gap-2">
+                    <div id="teacher-json-download-bar" class="flex gap-2">
                         <button onclick="downloadCurriculumJsonFile('k10')" class="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-xs font-bold">📥 grade10-python.json</button>
                         <button onclick="downloadCurriculumJsonFile('k11-cs')" class="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-xs font-bold">📥 grade11-cs.json</button>
                         <button onclick="downloadCurriculumJsonFile('k11-ict')" class="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-xs font-bold">📥 grade11-ict.json</button>
@@ -573,8 +671,58 @@
                     </div>
                 </div>
 
-                <!-- SUB-PANEL 3: CURRICULUM & ITEM BANK (GITHUB data/*.json) -->
-                <div id="admin-panel-curriculum" class="admin-subpanel hidden">
+                <!-- SUB-PANEL 3: CURRICULUM & ITEM BANK (DOCX/XLSX IMPORTER & GITHUB data/*.json) -->
+                <div id="admin-panel-curriculum" class="admin-subpanel hidden space-y-6">
+
+                    <!-- KHỐI NẠP ĐỀ THI & NGÂN HÀNG HỌC LIỆU TỪ FILE WORD (.DOCX) VÀ EXCEL (.XLSX) -->
+                    <div class="bg-gradient-to-r from-indigo-50 via-blue-50 to-emerald-50 p-5 rounded-2xl border border-indigo-200 shadow-sm">
+                        <div class="flex flex-wrap justify-between items-center gap-4">
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">Tính năng Nạp tự động</span>
+                                <h3 class="text-base font-extrabold text-slate-900 mt-1.5">📂 Nạp Đề Thi & Ngân Hàng Học Liệu Theo Mẫu (.DOCX, .XLSX)</h3>
+                                <p class="text-xs text-slate-600 mt-0.5">
+                                    Hỗ trợ bóc tách tự động đủ 3 phần Đề thi chuẩn Bộ GD&ĐT 2025 (Trắc nghiệm 4 lựa chọn, Đúng/Sai 4 ý a-b-c-d, Trả lời ngắn) và Bài tập Code Auto-Judge.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="downloadStandardExamTemplateXlsx()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Tải Mẫu Chuẩn Excel (.xlsx)
+                                </button>
+                                <button type="button" onclick="downloadStandardExamTemplateDocx()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i> Tải Mẫu Chuẩn Word (.docx)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- File Upload Dropzone -->
+                        <div class="mt-4 bg-white p-4 rounded-xl border-2 border-dashed border-indigo-300 flex flex-wrap justify-between items-center gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                                    <i data-lucide="upload" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-800 block">Chọn tệp Đề thi / Ngân hàng câu hỏi từ máy tính (.xlsx, .xls, .docx, .txt):</label>
+                                    <span class="text-[11px] text-slate-500">Hệ thống tự động kiểm tra cấu trúc và hiển thị bản xem trước trước khi lưu vào <code>data/*.json</code>.</span>
+                                </div>
+                            </div>
+                            <input type="file" accept=".xlsx,.xls,.docx,.txt" onchange="handleBankFileUpload(event)" class="text-xs font-semibold text-slate-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer">
+                        </div>
+
+                        <!-- Live Import Preview Box -->
+                        <div id="import-preview-container" class="hidden mt-4 bg-white p-4 rounded-xl border border-emerald-300 space-y-3">
+                            <div id="import-preview-summary" class="text-xs font-medium text-slate-800"></div>
+                            <div id="import-preview-details" class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1"></div>
+                            <div class="flex flex-wrap justify-end gap-2 pt-2">
+                                <button type="button" onclick="confirmAndApplyImportedBank('APPEND')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
+                                    ➕ Gộp Thêm Vào Ngân Hàng Hiện Có & Đồng Bộ GitHub
+                                </button>
+                                <button type="button" onclick="confirmAndApplyImportedBank('REPLACE')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow flex items-center gap-1.5">
+                                    🔄 Thay Thế Bộ Đề Thi Hiện Tại & Đồng Bộ GitHub
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <div class="lg:col-span-5 bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                             <h3 class="font-bold text-sm text-slate-900">📝 Biên Soạn Bài Tập Mới Vào <code>data/*.json</code></h3>
@@ -789,9 +937,10 @@
         </div>
     </footer>
 
-    <!-- EXTERNAL MODULES: AUTOMATED GOOGLE SHEETS PIPELINE & ADMIN COCKPIT -->
+    <!-- EXTERNAL MODULES: AUTOMATED GOOGLE SHEETS PIPELINE, ADMIN COCKPIT & RBAC/IMPORTER -->
     <script src="assets/js/gsheets-sync.js"></script>
     <script src="assets/js/admin-cockpit.js"></script>
+    <script src="assets/js/auth-and-importer.js"></script>
 
     <!-- CORE APPLICATION SCRIPT -->
     <script>
@@ -1466,7 +1615,13 @@ _output = sys.stdout.getvalue()
         function renderGradebookTable() {
             const tbody = document.getElementById('gradebook-tbody');
             if (!tbody) return;
-            const list = window.STUDENTS_ROSTER || STUDENTS_MOCK;
+            let list = window.STUDENTS_ROSTER || STUDENTS_MOCK;
+
+            // Phân quyền RBAC: Học sinh chỉ được xem duy nhất kết quả đánh giá của chính mình
+            if (window.CURRENT_SESSION && window.CURRENT_SESSION.role === 'STUDENT') {
+                list = list.filter(s => s.id === window.CURRENT_SESSION.studentId);
+            }
+
             tbody.innerHTML = list.map(s => {
                 const dtb = ((Number(s.tx1) + Number(s.tx2) + Number(s.tx3) + Number(s.tx4) + Number(s.gk) * 2 + Number(s.ck) * 3) / 9).toFixed(1);
                 return `
