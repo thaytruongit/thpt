@@ -881,8 +881,41 @@ const KNTT10_LESSONS_DEFAULT = [
 ];
 
 window.KNTT10_LESSONS = [];
+window.ALL_GRADE_LESSONS = { '10': [], '11': [], '12': [], '13': [] };
 window.ACTIVE_LESSON_ID = 'k10_b16';
 window.CURRENT_TOPIC_FILTER = 'ALL';
+window.ADMIN_SELECTED_GRADE = '10';
+window.ADMIN_SELECTED_CLASS = '10A1';
+window.ADMIN_SELECTED_LESSON_ID = 'k10_b16';
+window.ADMIN_EDITING_REGQUIZ_INDEX = -1;
+window.ADMIN_EDITING_PERIODIC_PART = null;
+window.ADMIN_EDITING_PERIODIC_INDEX = -1;
+
+// Danh mục Bài học chuẩn cho Khối 11, Khối 12 và Khối 13 (Bồi dưỡng HSG & Chuyên đề mở rộng)
+const GRADE_11_12_13_LESSONS_DEFAULT = {
+    '11': [
+        { id: 'k11_b01', grade: 11, num: 1, topic_id: 'G11_T1', badge: 'CHỦ ĐỀ 1', difficulty: 'Nhận biết', title: 'Bài 1: Hệ điều hành và Phần mềm nguồn mở', summary: 'Lịch sử phát triển hệ điều hành, phần mềm thương mại và phần mềm nguồn mở.', knowledge: '<h4>1. Hệ điều hành</h4><p>Quản lý tài nguyên phần cứng, giao tiếp với người dùng.</p>', exercise: { id: 'py11_01', title: 'Kiểm tra dung lượng bộ nhớ trống', type: 'ALGORITHM', description: 'Nhập tổng dung lượng RAM (GB) và dung lượng đang dùng. In ra dung lượng còn trống.', sample_in: '16 6', sample_out: '10', starter_code: 'total, used = map(int, input().split())\nprint(total - used)' }, regular_quiz: [{ q: 'Hệ điều hành nào sau đây là phần mềm nguồn mở?', options: ['Windows 11', 'Ubuntu Linux', 'macOS', 'iOS'], ans: 1, exp: 'Ubuntu Linux là hệ điều hành mã nguồn mở.' }] },
+        { id: 'k11_b02', grade: 11, num: 2, topic_id: 'G11_T1', badge: 'CHỦ ĐỀ 1', difficulty: 'Thông hiểu', title: 'Bài 2: Bên trong máy tính (CPU, RAM, ROM & Cổng logic)', summary: 'Cấu trúc bộ xử lý trung tâm CPU, bộ nhớ trong và các mạch logic AND, OR, NOT, XOR.', knowledge: '<h4>1. Các cổng logic cơ bản</h4><p>Cổng AND, OR, NOT, XOR và phép cộng trên hệ nhị phân.</p>', exercise: { id: 'py11_02', title: 'Mô phỏng phép toán cổng XOR nhị phân', type: 'ALGORITHM', description: 'Nhập hai bit nhị phân x, y (0 hoặc 1). In ra kết quả x XOR y.', sample_in: '1 0', sample_out: '1', starter_code: 'x, y = map(int, input().split())\nprint(x ^ y)' }, regular_quiz: [{ q: 'Phép cộng nhị phân 1 + 1 bằng bao nhiêu?', options: ['1', '10', '11', '0'], ans: 1, exp: 'Trong hệ nhị phân, 1 + 1 = 10.' }] },
+        { id: 'k11_b03', grade: 11, num: 3, topic_id: 'G11_T3', badge: 'SQL', difficulty: 'Thông hiểu', title: 'Bài 3: Khái niệm Hệ Cơ sở dữ liệu & Mô hình Quan hệ', summary: 'Bảng (Table), Bản ghi (Row/Tuple), Trường (Column), Khóa chính (Primary Key) và Khóa ngoại.', knowledge: '<h4>1. Mô hình dữ liệu quan hệ</h4><p>Dữ liệu được tổ chức thành các bảng 2 chiều gồm hàng và cột.</p>', exercise: { id: 'cs11_sql_01', title: 'Truy vấn danh sách học sinh Giỏi bằng SQL', type: 'SQL', description: 'Viết câu lệnh SELECT MaHS, HoTen, DiemTB FROM HOCSINH WHERE DiemTB >= 8.0 ORDER BY DiemTB DESC;', sample_in: 'HOCSINH(MaHS, HoTen, Lop, DiemTB)', sample_out: 'HS03 | Le Hoang Cuong | 9.0', starter_code: 'SELECT MaHS, HoTen, DiemTB\nFROM HOCSINH\nWHERE DiemTB >= 8.0\nORDER BY DiemTB DESC;' }, regular_quiz: [{ q: 'Khóa chính (Primary Key) của bảng có đặc điểm gì?', options: ['Được phép trùng lặp', 'Được phép để trống (NULL)', 'Xác định duy nhất mỗi bản ghi và không được NULL', 'Chỉ chứa kiểu số'], ans: 2, exp: 'Khóa chính bắt buộc duy nhất và NOT NULL.' }] },
+        { id: 'k11_b04', grade: 11, num: 4, topic_id: 'G11_T3', badge: 'SQL', difficulty: 'Vận dụng', title: 'Bài 4: Ngôn ngữ truy vấn SQL (SELECT, WHERE, JOIN, GROUP BY)', summary: 'Cú pháp truy vấn dữ liệu từ một hoặc nhiều bảng liên kết bằng INNER JOIN.', knowledge: '<h4>1. Truy vấn SQL</h4><p>Cấu trúc SELECT ... FROM ... WHERE ... GROUP BY ... ORDER BY ...</p>', exercise: { id: 'py11_04', title: 'Đếm số bản ghi thỏa điều kiện điểm chuẩn', type: 'ALGORITHM', description: 'Nhập N điểm số trên một dòng. Đếm số lượng điểm >= 8.0.', sample_in: '7.5 8.0 9.2 6.5 8.5', sample_out: '3', starter_code: 'arr = list(map(float, input().split()))\nprint(sum(1 for x in arr if x >= 8.0))' }, regular_quiz: [{ q: 'Mệnh đề nào dùng để lọc các bản ghi trong SQL?', options: ['ORDER BY', 'WHERE', 'SELECT', 'FROM'], ans: 1, exp: 'WHERE dùng để lọc các dòng thỏa điều kiện.' }] },
+        { id: 'k11_b05', grade: 11, num: 5, topic_id: 'G11_T6', badge: 'ALGORITHM', difficulty: 'Thông hiểu', title: 'Bài 5: Kỹ thuật Thiết kế Thuật toán & Đệ quy', summary: 'Thiết kế thuật toán từ trên xuống, hàm đệ quy và bài toán tính giai thừa, dãy Fibonacci.', knowledge: '<h4>1. Đệ quy (Recursion)</h4><p>Hàm tự gọi lại chính nó với kích thước bài toán nhỏ hơn và có điều kiện dừng.</p>', exercise: { id: 'py11_05', title: 'Tính số Fibonacci thứ N bằng đệ quy có nhớ', type: 'ALGORITHM', description: 'Nhập số nguyên N (1 <= N <= 35). In ra số Fibonacci thứ N (F1=1, F2=1).', sample_in: '7', sample_out: '13', starter_code: 'n = int(input())\na, b = 1, 1\nfor _ in range(n - 1):\n    a, b = b, a + b\nprint(a)' }, regular_quiz: [{ q: 'Thành phần bắt buộc phải có trong hàm đệ quy là gì?', options: ['Vòng lặp while', 'Phần cơ sở (Điều kiện dừng)', 'Biến toàn cục', 'Mảng 2 chiều'], ans: 1, exp: 'Thiếu điều kiện dừng sẽ gây đệ quy vô hạn.' }] },
+        { id: 'k11_b06', grade: 11, num: 6, topic_id: 'G11_T6', badge: 'ALGORITHM', difficulty: 'Vận dụng', title: 'Bài 6: Thuật toán Tìm kiếm tuần tự & Tìm kiếm nhị phân', summary: 'So sánh tìm kiếm tuần tự O(N) và tìm kiếm nhị phân O(log N) trên dãy đã sắp xếp.', knowledge: '<h4>1. Tìm kiếm nhị phân (Binary Search)</h4><p>Chia đôi khoảng tìm kiếm ở mỗi bước trên mảng đã sắp xếp.</p>', exercise: { id: 'cs11_algo_01', title: 'Cài đặt Tìm kiếm nhị phân (Binary Search)', type: 'ALGORITHM', description: 'Cho dãy N số tăng dần và số X. Tìm vị trí của X (tính từ 0), nếu không có in -1.', sample_in: '6 7\n1 3 5 7 9 11', sample_out: '3', starter_code: 'n, x = map(int, input().split())\narr = list(map(int, input().split()))\nprint(arr.index(x) if x in arr else -1)' }, regular_quiz: [{ q: 'Độ phức tạp thời gian của Tìm kiếm nhị phân là bao nhiêu?', options: ['O(1)', 'O(log N)', 'O(N)', 'O(N^2)'], ans: 1, exp: 'Mỗi bước chia đôi không gian tìm kiếm nên độ phức tạp là O(log N).' }] },
+        { id: 'k11_b07', grade: 11, num: 7, topic_id: 'G11_T6', badge: 'ALGORITHM', difficulty: 'Vận dụng', title: 'Bài 7: Các thuật toán Sắp xếp (Chèn, Chọn, Nổi bọt, Chia để trị)', summary: 'Cài đặt Insertion Sort, Selection Sort, Bubble Sort và QuickSort/MergeSort trong Python.', knowledge: '<h4>1. Các thuật toán sắp xếp cơ bản</h4><p>Sắp xếp nổi bọt, chọn, chèn có độ phức tạp O(N^2); MergeSort và QuickSort đạt O(N log N).</p>', exercise: { id: 'py11_07', title: 'Sắp xếp dãy số tăng dần', type: 'ALGORITHM', description: 'Nhập dãy số nguyên trên 1 dòng. In ra dãy sau khi sắp xếp tăng dần.', sample_in: '9 2 7 1 5', sample_out: '1 2 5 7 9', starter_code: 'arr = sorted(map(int, input().split()))\nprint(*(arr))' }, regular_quiz: [{ q: 'Thuật toán nào sau đây áp dụng chiến lược Chia để trị?', options: ['Bubble Sort', 'Selection Sort', 'Merge Sort', 'Linear Search'], ans: 2, exp: 'Merge Sort và Quick Sort áp dụng Chia để trị.' }] },
+        { id: 'k11_b08', grade: 11, num: 8, topic_id: 'G11_T6', badge: 'ALGORITHM', difficulty: 'Thông hiểu', title: 'Bài 8: Kiểm thử và Đánh giá độ phức tạp thuật toán', summary: 'Ký hiệu Big-O, phân tích số phép toán cơ bản và thiết kế bộ test kiểm thử chương trình.', knowledge: '<h4>1. Độ phức tạp thời gian</h4><p>Đánh giá tốc độ tăng số phép toán khi kích thước dữ liệu đầu vào N tăng lên.</p>', exercise: { id: 'py11_08', title: 'Tính tổng cấp số cộng trong O(1)', type: 'ALGORITHM', description: 'Nhập số nguyên dương N (N <= 10^9). Tính tổng 1 + 2 + ... + N bằng công thức O(1).', sample_in: '100', sample_out: '5050', starter_code: 'n = int(input())\nprint(n * (n + 1) // 2)' }, regular_quiz: [{ q: 'Hai vòng lặp for lồng nhau từ 1 đến N có độ phức tạp là:', options: ['O(N)', 'O(log N)', 'O(N^2)', 'O(1)'], ans: 2, exp: 'N * N bước lặp tương ứng O(N^2).' }] }
+    ],
+    '12': [
+        { id: 'k12_b01', grade: 12, num: 1, topic_id: 'G12_T1', badge: 'AI & DATA', difficulty: 'Nhận biết', title: 'Bài 1: Làm quen với Trí tuệ nhân tạo (AI) & Học máy', summary: 'Khái niệm AI hẹp, AI tổng quát, các ứng dụng nhận dạng khuôn mặt, xử lý ngôn ngữ tự nhiên.', knowledge: '<h4>1. Trí tuệ nhân tạo (Artificial Intelligence)</h4><p>Khả năng của hệ thống máy tính thực hiện các công việc mang tính trí tuệ của con người.</p>', exercise: { id: 'py12_01', title: 'Phân loại ngưỡng điểm dự đoán mô hình AI', type: 'ALGORITHM', description: 'Nhập xác suất dự đoán p (0.0 <= p <= 1.0). Nếu p >= 0.5 in POSITIVE, ngược lại in NEGATIVE.', sample_in: '0.78', sample_out: 'POSITIVE', starter_code: 'p = float(input())\nprint("POSITIVE" if p >= 0.5 else "NEGATIVE")' }, regular_quiz: [{ q: 'Ứng dụng nào sau đây là ví dụ điển hình của Trí tuệ nhân tạo?', options: ['Soạn văn bản thuần túy trên Notepad', 'Trợ lý ảo nhận diện giọng nói và dịch tự động', 'Máy tính bỏ túi cộng trừ cơ bản', 'Đồng hồ bấm giờ'], ans: 1, exp: 'Nhận diện giọng nói và dịch tự động sử dụng các mô hình AI.' }] },
+        { id: 'k12_b02', grade: 12, num: 2, topic_id: 'G12_T2', badge: 'NETWORK', difficulty: 'Thông hiểu', title: 'Bài 2: Giao thức mạng TCP/IP và Thiết bị mạng (Switch, Router)', summary: 'Chức năng của Router, Switch, Access Point, địa chỉ IPv4/IPv6 và giao thức TCP, IP, HTTP, DNS.', knowledge: '<h4>1. Bộ giao thức TCP/IP</h4><p>IP định tuyến gói tin qua địa chỉ IP; TCP đảm bảo truyền dữ liệu tin cậy.</p>', exercise: { id: 'py12_02', title: 'Kiểm tra tính hợp lệ của địa chỉ IPv4', type: 'ALGORITHM', description: 'Nhập một chuỗi IPv4 gồm 4 số cách nhau bởi dấu chấm. Kiểm tra mỗi số có nằm trong đoạn [0, 255] không.', sample_in: '192.168.1.1', sample_out: 'VALID', starter_code: 'parts = list(map(int, input().split(".")))\nprint("VALID" if len(parts)==4 and all(0<=x<=255 for x in parts) else "INVALID")' }, regular_quiz: [{ q: 'Giao thức nào dùng để phân giải tên miền thành địa chỉ IP?', options: ['FTP', 'SMTP', 'DNS', 'DHCP'], ans: 2, exp: 'DNS (Domain Name System) phân giải tên miền sang địa chỉ IP.' }] },
+        { id: 'k12_b03', grade: 12, num: 3, topic_id: 'G12_T4', badge: 'WEB HTML5', difficulty: 'Thông hiểu', title: 'Bài 3: Ngôn ngữ đánh dấu siêu văn bản HTML5 & Cấu trúc trang Web', summary: 'Các thẻ cấu trúc HTML5, danh sách, bảng biểu, chèn đa phương tiện và biểu mẫu (Form).', knowledge: '<h4>1. Cấu trúc văn bản HTML5</h4><p>Sử dụng các thẻ ngữ nghĩa header, nav, main, section, article, footer.</p>', exercise: { id: 'ict11_web_01', title: 'Thiết kế Trang giới thiệu bằng HTML5', type: 'WEB', description: 'Sử dụng các thẻ header, main, section, ul, li, footer để tạo bố cục trang web.', sample_in: 'HTML5 Semantics', sample_out: 'Đạt 6/6 thẻ HTML5', starter_code: '<header><h1>Trang chủ Tin học 12</h1></header>\n<main><section><ul><li>HTML5</li><li>CSS3</li></ul></section></main>\n<footer>THPT Hub</footer>' }, regular_quiz: [{ q: 'Thẻ HTML nào dùng để tạo liên kết siêu văn bản?', options: ['<img>', '<a>', '<div>', '<form>'], ans: 1, exp: 'Thẻ <a href="..."> dùng để tạo liên kết.' }] },
+        { id: 'k12_b04', grade: 12, num: 4, topic_id: 'G12_T4', badge: 'WEB CSS3', difficulty: 'Vận dụng', title: 'Bài 4: Định dạng trang Web với CSS3, Box Model & Flexbox', summary: 'Bộ chọn CSS (tag, class, id), mô hình hộp (margin, border, padding) và dàn trang Flexbox.', knowledge: '<h4>1. Bộ chọn CSS</h4><p>Bộ chọn lớp (.class), bộ chọn định danh (#id) và thứ tự ưu tiên trong CSS.</p>', exercise: { id: 'py12_04', title: 'Tính tổng chiều rộng phần tử theo CSS Box Model', type: 'ALGORITHM', description: 'Nhập content_width, padding_left_right, border_left_right. In ra tổng chiều rộng hộp.', sample_in: '300 20 2', sample_out: '344', starter_code: 'w, p, b = map(int, input().split())\nprint(w + 2*p + 2*b)' }, regular_quiz: [{ q: 'Trong CSS, ký hiệu nào bắt đầu cho bộ chọn ID?', options: ['Dấu chấm (.)', 'Dấu thăng (#)', 'Dấu sao (*)', 'Dấu hai chấm (:)'], ans: 1, exp: 'Bộ chọn id sử dụng dấu # (ví dụ #header).' }] },
+        { id: 'k12_b05', grade: 12, num: 5, topic_id: 'G12_T5', badge: 'DATA SCIENCE', difficulty: 'Vận dụng', title: 'Bài 5: Khoa học dữ liệu & Phân tích dữ liệu với Python', summary: 'Quy trình khoa học dữ liệu, làm sạch dữ liệu, thống kê mô tả và trực quan hóa dữ liệu.', knowledge: '<h4>1. Quy trình Khoa học dữ liệu</h4><p>Thu thập -> Tiền xử lý -> Phân tích khám phá -> Mô hình hóa -> Trực quan hóa.</p>', exercise: { id: 'py12_05', title: 'Tính Trung bình và Trung vị của tập dữ liệu', type: 'ALGORITHM', description: 'Nhập dãy N số thực. In ra giá trị trung bình cộng (làm tròn 2 chữ số thập phân).', sample_in: '5.0 7.0 9.0 8.0', sample_out: '7.25', starter_code: 'arr = list(map(float, input().split()))\nprint(f"{sum(arr)/len(arr):.2f}")' }, regular_quiz: [{ q: 'Bước đầu tiên trong quy trình Khoa học dữ liệu là gì?', options: ['Vẽ biểu đồ', 'Xác định câu hỏi & Thu thập dữ liệu', 'Triển khai phần cứng', 'Xóa toàn bộ CSDL'], ans: 1, exp: 'Xác định bài toán và thu thập dữ liệu là bước khởi đầu.' }] }
+    ],
+    '13': [
+        { id: 'k13_b01', grade: 13, num: 1, topic_id: 'G13_T1', badge: 'HSG & ÔN THI', difficulty: 'Vận dụng cao', title: 'Chuyên đề 1: Quy hoạch động (Dynamic Programming) Bồi dưỡng HSG', summary: 'Bài toán dãy con tăng dài nhất (LIS), bài toán cái túi (Knapsack) và tối ưu hóa tổ hợp.', knowledge: '<h4>1. Phương pháp Quy hoạch động</h4><p>Chia bài toán thành các bài toán con gối nhau và lưu trữ bảng phương án tối ưu.</p>', exercise: { id: 'py13_01', title: 'Tìm độ dài dãy con tăng dài nhất (LIS)', type: 'ALGORITHM', description: 'Nhập dãy số nguyên trên 1 dòng. Tìm độ dài dãy con tăng nghiêm ngặt dài nhất.', sample_in: '10 9 2 5 3 7 101 18', sample_out: '4', starter_code: 'arr = list(map(int, input().split()))\ndp = [1]*len(arr)\nfor i in range(len(arr)):\n    for j in range(i):\n        if arr[j] < arr[i]: dp[i] = max(dp[i], dp[j]+1)\nprint(max(dp) if dp else 0)' }, regular_quiz: [{ q: 'Đặc trưng cốt lõi của Quy hoạch động so với Chia để trị là gì?', options: ['Không dùng mảng', 'Lưu trữ kết quả các bài toán con gối nhau để tránh tính lại', 'Chỉ áp dụng cho xâu ký tự', 'Luôn có độ phức tạp O(1)'], ans: 1, exp: 'Quy hoạch động lưu bảng kết quả các bài toán con.' }] },
+        { id: 'k13_b02', grade: 13, num: 2, topic_id: 'G13_T1', badge: 'HSG & ÔN THI', difficulty: 'Vận dụng cao', title: 'Chuyên đề 2: Lý thuyết Đồ thị (BFS, DFS, Đường đi ngắn nhất Dijkstra)', summary: 'Biểu diễn đồ thị bằng danh sách kề, duyệt chiều rộng BFS, duyệt chiều sâu DFS và Dijkstra.', knowledge: '<h4>1. Duyệt đồ thị BFS & DFS</h4><p>BFS sử dụng hàng đợi (Queue) tìm đường đi ngắn nhất trên đồ thị không trọng số.</p>', exercise: { id: 'py13_02', title: 'Tính tổng bậc của các đỉnh trên đồ thị vô hướng', type: 'ALGORITHM', description: 'Nhập số đỉnh N và số cạnh M. Theo tính chất đồ thị vô hướng, in ra tổng bậc của tất cả các đỉnh (2*M).', sample_in: '5 6', sample_out: '12', starter_code: 'n, m = map(int, input().split())\nprint(2 * m)' }, regular_quiz: [{ q: 'Trong đồ thị vô hướng có M cạnh, tổng bậc của tất cả các đỉnh bằng:', options: ['M', '2 * M', 'M / 2', 'M^2'], ans: 1, exp: 'Mỗi cạnh đóng góp 2 vào tổng bậc của đồ thị vô hướng.' }] },
+        { id: 'k13_b03', grade: 13, num: 3, topic_id: 'G13_T1', badge: 'HSG & ÔN THI', difficulty: 'Vận dụng cao', title: 'Chuyên đề 3: Luyện Đề Thi Tốt Nghiệp THPT Quốc Gia Chuẩn BGD 2025', summary: 'Tổng ôn 3 phần: Trắc nghiệm 4 lựa chọn, Đúng/Sai 4 ý (chấm lũy tiến) và Trả lời ngắn.', knowledge: '<h4>1. Cấu trúc Đề thi Tốt nghiệp THPT môn Tin học 2025</h4><p>Phần I: 24 câu trắc nghiệm; Phần II: 4 câu Đúng/Sai (định hướng CS & ICT); Phần III: Trả lời ngắn.</p>', exercise: { id: 'py13_03', title: 'Tính điểm Phần II (Đúng/Sai lũy tiến chuẩn BGD 2025)', type: 'ALGORITHM', description: 'Nhập số ý trả lời đúng k (0 <= k <= 4) trong 1 câu Đúng/Sai. In ra số điểm đạt được (0, 0.1, 0.25, 0.5, 1.0).', sample_in: '3', sample_out: '0.5', starter_code: 'k = int(input())\nscores = {0: 0.0, 1: 0.1, 2: 0.25, 3: 0.5, 4: 1.0}\nprint(scores.get(k, 0.0))' }, regular_quiz: [{ q: 'Trong Phần II (Đúng/Sai) đề thi THPT 2025, trả lời đúng 3/4 ý trong một câu được bao nhiêu điểm?', options: ['0.25 điểm', '0.5 điểm', '0.75 điểm', '1.0 điểm'], ans: 1, exp: 'Quy tắc chấm lũy tiến: 1 ý = 0.1đ; 2 ý = 0.25đ; 3 ý = 0.5đ; 4 ý = 1.0đ.' }] }
+    ]
+};
 
 function initKntt10LessonsDatabase() {
     const saved = localStorage.getItem('thpt_kntt10_lessons_v1');
@@ -898,6 +931,21 @@ function initKntt10LessonsDatabase() {
     if (!window.KNTT10_LESSONS || window.KNTT10_LESSONS.length === 0) {
         window.KNTT10_LESSONS = JSON.parse(JSON.stringify(KNTT10_LESSONS_DEFAULT));
     }
+
+    window.KNTT10_LESSONS.forEach(l => { if (!l.grade) l.grade = 10; });
+
+    // Tải danh sách bài học các Khối 11, 12, 13
+    const savedMulti = localStorage.getItem('thpt_multi_grade_lessons_v1');
+    let parsedMulti = null;
+    if (savedMulti) {
+        try { parsedMulti = JSON.parse(savedMulti); } catch (e) {}
+    }
+    window.ALL_GRADE_LESSONS = {
+        '10': window.KNTT10_LESSONS,
+        '11': (parsedMulti && Array.isArray(parsedMulti['11']) && parsedMulti['11'].length > 0) ? parsedMulti['11'] : JSON.parse(JSON.stringify(GRADE_11_12_13_LESSONS_DEFAULT['11'])),
+        '12': (parsedMulti && Array.isArray(parsedMulti['12']) && parsedMulti['12'].length > 0) ? parsedMulti['12'] : JSON.parse(JSON.stringify(GRADE_11_12_13_LESSONS_DEFAULT['12'])),
+        '13': (parsedMulti && Array.isArray(parsedMulti['13']) && parsedMulti['13'].length > 0) ? parsedMulti['13'] : JSON.parse(JSON.stringify(GRADE_11_12_13_LESSONS_DEFAULT['13']))
+    };
 
     // Đồng bộ các bài tập từ 34 bài học sang APP_DATA['k10'] để trình chấm Auto-Judge hoạt động xuyên suốt
     if (typeof APP_DATA !== 'undefined') {
@@ -926,14 +974,36 @@ function initKntt10LessonsDatabase() {
     renderTopicFilterPills();
     renderKntt10GridView();
     populateTeacherLessonAuthoringSelect();
+    renderAdminLeftLessonTree();
+    renderAdminTopHorizontalSelectorBars();
+    renderPeriodicExamCrudList();
 }
 
 function saveKntt10LessonsToStorage() {
     localStorage.setItem('thpt_kntt10_lessons_v1', JSON.stringify(window.KNTT10_LESSONS));
+    if (window.ALL_GRADE_LESSONS) {
+        window.ALL_GRADE_LESSONS['10'] = window.KNTT10_LESSONS;
+        localStorage.setItem('thpt_multi_grade_lessons_v1', JSON.stringify({
+            '11': window.ALL_GRADE_LESSONS['11'] || [],
+            '12': window.ALL_GRADE_LESSONS['12'] || [],
+            '13': window.ALL_GRADE_LESSONS['13'] || []
+        }));
+    }
+}
+
+function getAllLessonsFlat() {
+    const g = window.ALL_GRADE_LESSONS || {};
+    return [
+        ...(g['10'] || window.KNTT10_LESSONS || []),
+        ...(g['11'] || []),
+        ...(g['12'] || []),
+        ...(g['13'] || [])
+    ];
 }
 
 function getLessonById(lessonId) {
-    return (window.KNTT10_LESSONS || []).find(l => l.id === lessonId) || window.KNTT10_LESSONS[0];
+    const all = getAllLessonsFlat();
+    return all.find(l => l.id === lessonId) || (window.KNTT10_LESSONS && window.KNTT10_LESSONS[0]);
 }
 
 // ============================================================================
@@ -1240,59 +1310,427 @@ async function submitLessonRegularQuiz() {
 }
 
 // ============================================================================
-// CHỨC NĂNG CHO GIÁO VIÊN: SOẠN KIẾN THỨC, BÀI TẬP, KT THƯỜNG XUYÊN THEO BÀI HỌC
+// CHỨC NĂNG CHO GIÁO VIÊN: CÂY THƯ MỤC KHỐI 10, 11, 12, 13 BÊN TRÁI + THANH CHỌN NGANG + SOẠN BÀI / NẠP DOCX / SỬA XÓA
 // ============================================================================
-function populateTeacherLessonAuthoringSelect() {
-    const sel = document.getElementById('teacher-author-lesson-select');
-    if (!sel) return;
 
-    sel.innerHTML = (window.KNTT10_LESSONS || []).map(l =>
-        `<option value="${l.id}">[Bài ${l.num} - ${l.badge}] ${l.title}</option>`
-    ).join('');
+window.EXPANDED_ADMIN_GRADES = { '10': true, '11': false, '12': false, '13': false };
 
-    onSelectLessonForTeacherAuthoring();
+function toggleAdminTreeGrade(gradeStr) {
+    const g = String(gradeStr);
+    window.EXPANDED_ADMIN_GRADES[g] = !window.EXPANDED_ADMIN_GRADES[g];
+    window.ADMIN_SELECTED_GRADE = g;
+    const gradeLessons = (window.ALL_GRADE_LESSONS && window.ALL_GRADE_LESSONS[g]) || [];
+    if (gradeLessons.length > 0 && !gradeLessons.some(l => l.id === window.ADMIN_SELECTED_LESSON_ID)) {
+        window.ADMIN_SELECTED_LESSON_ID = gradeLessons[0].id;
+    }
+    renderAdminLeftLessonTree();
+    renderAdminTopHorizontalSelectorBars();
+    populateTeacherLessonAuthoringSelect();
 }
 
-function onSelectLessonForTeacherAuthoring() {
+function selectLessonFromAdminTree(lessonId, gradeStr) {
+    if (gradeStr) {
+        window.ADMIN_SELECTED_GRADE = String(gradeStr);
+        window.EXPANDED_ADMIN_GRADES[String(gradeStr)] = true;
+    }
+    window.ADMIN_SELECTED_LESSON_ID = lessonId;
+
+    // Chuyển sang khu vực biên soạn Bài học & Đề thi nếu đang ở tab khác
+    if (typeof switchAdminSubTab === 'function') {
+        switchAdminSubTab('curriculum');
+    }
+
+    renderAdminLeftLessonTree();
+    renderAdminTopHorizontalSelectorBars();
+
     const sel = document.getElementById('teacher-author-lesson-select');
-    if (!sel) return;
-    const les = getLessonById(sel.value);
+    if (sel) {
+        populateTeacherLessonAuthoringSelect();
+        sel.value = lessonId;
+    }
+    onSelectLessonForTeacherAuthoring(lessonId);
+
+    const studioEl = document.getElementById('teacher-lesson-studio-anchor');
+    if (studioEl) {
+        studioEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function selectAdminGradeHorizontalPill(gradeStr) {
+    const g = String(gradeStr);
+    window.ADMIN_SELECTED_GRADE = g;
+    window.EXPANDED_ADMIN_GRADES[g] = true;
+
+    const gradeLessons = (window.ALL_GRADE_LESSONS && window.ALL_GRADE_LESSONS[g]) || [];
+    if (gradeLessons.length > 0) {
+        window.ADMIN_SELECTED_LESSON_ID = gradeLessons[0].id;
+    }
+
+    // Đồng bộ bộ lọc Khối ở tất cả các phân hệ Quản trị (không dùng dropdown ẩn)
+    const rosterGradeEl = document.getElementById('roster-filter-grade');
+    if (rosterGradeEl) rosterGradeEl.value = (g === '10' || g === '11') ? g : 'ALL';
+    const gbGradeEl = document.getElementById('gradebook-filter-grade');
+    if (gbGradeEl) gbGradeEl.value = (g === '10' || g === '11') ? g : 'ALL';
+    const examGradeEl = document.getElementById('exam-cfg-grade-select');
+    if (examGradeEl) {
+        examGradeEl.value = (g === '10' || g === '11') ? g : 'ALL';
+        if (typeof onChangeExamConfigGradeFilter === 'function') onChangeExamConfigGradeFilter();
+    }
+
+    renderAdminLeftLessonTree();
+    renderAdminTopHorizontalSelectorBars();
+    populateTeacherLessonAuthoringSelect();
+    if (typeof renderAdminRosterTable === 'function') renderAdminRosterTable();
+    if (typeof renderAdminGradebookEditor === 'function') renderAdminGradebookEditor();
+}
+
+function selectAdminClassHorizontalPill(classId) {
+    window.ADMIN_SELECTED_CLASS = classId;
+
+    // Đồng bộ trực tiếp sang các bộ chọn lớp trong Quản trị
+    ['roster-filter-class', 'gradebook-filter-class', 'lab-filter-class', 'exam-cfg-class-select', 'assign-lesson-class-select'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if ([...el.options].some(o => o.value === classId)) {
+                el.value = classId;
+            }
+        }
+    });
+
+    if (typeof renderLessonAssignmentManager === 'function') renderLessonAssignmentManager();
+    if (typeof onChangeExamConfigClassSelect === 'function') onChangeExamConfigClassSelect();
+    if (typeof renderAdminRosterTable === 'function') renderAdminRosterTable();
+    if (typeof renderLabHeatmap45 === 'function') renderLabHeatmap45();
+    if (typeof renderAdminGradebookEditor === 'function') renderAdminGradebookEditor();
+
+    renderAdminTopHorizontalSelectorBars();
+}
+
+function renderAdminTopHorizontalSelectorBars() {
+    const gradeBar = document.getElementById('admin-horizontal-grade-pills');
+    const classBar = document.getElementById('admin-horizontal-class-pills');
+
+    const gradeMeta = [
+        { g: '10', label: 'Khối 10 (34 Bài KNTT)', color: 'from-blue-600 to-indigo-600' },
+        { g: '11', label: 'Khối 11 (CS & ICT)', color: 'from-emerald-600 to-teal-600' },
+        { g: '12', label: 'Khối 12 (AI, Mạng & Web)', color: 'from-purple-600 to-indigo-600' },
+        { g: '13', label: 'Khối 13 (HSG & Luyện Đề THPT)', color: 'from-amber-500 to-orange-600' }
+    ];
+
+    if (gradeBar) {
+        gradeBar.innerHTML = gradeMeta.map(item => {
+            const active = String(window.ADMIN_SELECTED_GRADE) === item.g;
+            const count = ((window.ALL_GRADE_LESSONS && window.ALL_GRADE_LESSONS[item.g]) || []).length;
+            return `
+                <button type="button" onclick="selectAdminGradeHorizontalPill('${item.g}')"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1.5 ${active
+                        ? `bg-gradient-to-r ${item.color} text-white shadow-md scale-[1.02]`
+                        : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50'}">
+                    <span>🎓 ${item.label}</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] ${active ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'}">${count} bài</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    if (classBar) {
+        const classes = window.CLASSES_LIST || [];
+        const allBtnActive = window.ADMIN_SELECTED_CLASS === 'ALL';
+        const allBtnHtml = `
+            <button type="button" onclick="selectAdminClassHorizontalPill('ALL')"
+                class="px-3 py-1.5 rounded-full text-xs font-extrabold transition-all ${allBtnActive
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300'}">
+                🏫 Tất cả các Lớp (${classes.length})
+            </button>
+        `;
+        const classBtnsHtml = classes.map(c => {
+            const isAct = window.ADMIN_SELECTED_CLASS === c.id;
+            return `
+                <button type="button" onclick="selectAdminClassHorizontalPill('${c.id}')"
+                    class="px-3 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1 ${isAct
+                        ? 'bg-emerald-600 text-white shadow-sm scale-[1.02]'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40'}">
+                    <span>Lớp ${c.id}</span>
+                    <span class="text-[10px] opacity-80">(K${c.grade})</span>
+                </button>
+            `;
+        }).join('');
+        classBar.innerHTML = allBtnHtml + classBtnsHtml;
+    }
+
+    // Render thêm các dãy nút chọn Lớp ngang ở khu vực Giao bài & Giao đề định kỳ
+    const assignClassPills = document.getElementById('assign-lesson-class-pills');
+    if (assignClassPills) {
+        const curCls = document.getElementById('assign-lesson-class-select')?.value || window.ADMIN_SELECTED_CLASS || '10A1';
+        assignClassPills.innerHTML = (window.CLASSES_LIST || []).map(c => {
+            const active = c.id === curCls;
+            return `
+                <button type="button" onclick="document.getElementById('assign-lesson-class-select').value='${c.id}'; selectAdminClassHorizontalPill('${c.id}');"
+                    class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${active
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-400'}">
+                    🏫 Lớp ${c.id} (Khối ${c.grade})
+                </button>
+            `;
+        }).join('');
+    }
+
+    const examGradePills = document.getElementById('exam-cfg-grade-pills');
+    if (examGradePills) {
+        const curG = document.getElementById('exam-cfg-grade-select')?.value || 'ALL';
+        const gOpts = [
+            { val: 'ALL', label: 'Tất cả Khối' },
+            { val: '10', label: 'Khối 10' },
+            { val: '11', label: 'Khối 11' },
+            { val: '12', label: 'Khối 12' },
+            { val: '13', label: 'Khối 13' }
+        ];
+        examGradePills.innerHTML = gOpts.map(o => `
+            <button type="button" onclick="document.getElementById('exam-cfg-grade-select').value='${o.val}'; onChangeExamConfigGradeFilter(); renderAdminTopHorizontalSelectorBars();"
+                class="px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all ${curG === o.val
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-400'}">
+                ${o.label}
+            </button>
+        `).join('');
+    }
+
+    const examClassPills = document.getElementById('exam-cfg-class-pills');
+    if (examClassPills) {
+        const curC = document.getElementById('exam-cfg-class-select')?.value || 'ALL';
+        const allC = [{ id: 'ALL', label: 'Tất cả Lớp' }, ...(window.CLASSES_LIST || []).map(c => ({ id: c.id, label: `Lớp ${c.id}` }))];
+        examClassPills.innerHTML = allC.map(c => `
+            <button type="button" onclick="document.getElementById('exam-cfg-class-select').value='${c.id}'; onChangeExamConfigClassSelect(); renderAdminTopHorizontalSelectorBars();"
+                class="px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all ${curC === c.id
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-400'}">
+                ${c.label}
+            </button>
+        `).join('');
+    }
+}
+
+function renderAdminLeftLessonTree() {
+    const treeEl = document.getElementById('admin-left-grade-lesson-tree');
+    if (!treeEl) return;
+
+    const gradesInfo = [
+        { g: '10', title: 'Khối 10 • Tin học 10 KNTT', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
+        { g: '11', title: 'Khối 11 • Định hướng CS & ICT', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+        { g: '12', title: 'Khối 12 • AI, Mạng & Web', badgeClass: 'bg-purple-100 text-purple-800 border-purple-200' },
+        { g: '13', title: 'Khối 13 • Bồi dưỡng HSG & Đề BGD', badgeClass: 'bg-amber-100 text-amber-800 border-amber-200' }
+    ];
+
+    treeEl.innerHTML = gradesInfo.map(info => {
+        const lessons = (window.ALL_GRADE_LESSONS && window.ALL_GRADE_LESSONS[info.g]) || [];
+        const isExpanded = !!window.EXPANDED_ADMIN_GRADES[info.g];
+        const isCurrentGrade = String(window.ADMIN_SELECTED_GRADE) === info.g;
+
+        const lessonsListHtml = isExpanded ? `
+            <div class="mt-1.5 pl-2.5 border-l-2 border-indigo-200 space-y-1 max-h-72 overflow-y-auto pr-1">
+                ${lessons.map(les => {
+                    const isSelected = les.id === window.ADMIN_SELECTED_LESSON_ID;
+                    const qCount = Array.isArray(les.regular_quiz) ? les.regular_quiz.length : 0;
+                    return `
+                        <button type="button" onclick="selectLessonFromAdminTree('${les.id}', '${info.g}')"
+                            class="w-full text-left px-2.5 py-1.5 rounded-xl text-[11px] transition-all flex items-start justify-between gap-1.5 ${isSelected
+                                ? 'bg-indigo-600 text-white font-extrabold shadow-sm'
+                                : 'bg-white/80 hover:bg-indigo-50 text-slate-700 font-semibold border border-slate-100'}">
+                            <span class="line-clamp-2 leading-snug">${les.title}</span>
+                            <span class="shrink-0 text-[10px] px-1.5 py-0.2 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}">${qCount} câu</span>
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        ` : '';
+
+        return `
+            <div class="rounded-2xl border ${isCurrentGrade ? 'border-indigo-300 bg-indigo-50/40' : 'border-slate-200 bg-slate-50/70'} p-2 transition-all">
+                <button type="button" onclick="toggleAdminTreeGrade('${info.g}')"
+                    class="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl text-left font-extrabold text-xs text-slate-900 hover:bg-white/80">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-indigo-600 font-mono">${isExpanded ? '▼' : '▶'}</span>
+                        <span>${info.title}</span>
+                    </div>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${info.badgeClass}">${lessons.length} bài</span>
+                </button>
+                ${lessonsListHtml}
+            </div>
+        `;
+    }).join('');
+}
+
+function populateTeacherLessonAuthoringSelect() {
+    const sel = document.getElementById('teacher-author-lesson-select');
+    const g = String(window.ADMIN_SELECTED_GRADE || '10');
+    const gradeLessons = (window.ALL_GRADE_LESSONS && window.ALL_GRADE_LESSONS[g]) || window.KNTT10_LESSONS || [];
+
+    if (sel) {
+        sel.innerHTML = gradeLessons.map(l =>
+            `<option value="${l.id}" ${l.id === window.ADMIN_SELECTED_LESSON_ID ? 'selected' : ''}>[Khối ${l.grade || g} - Bài ${l.num}] ${l.title}</option>`
+        ).join('');
+    }
+
+    // Hiển thị thêm các pill bài học chọn nhanh không cần mở dropdown
+    const quickBar = document.getElementById('teacher-author-lesson-pills');
+    if (quickBar) {
+        quickBar.innerHTML = gradeLessons.map(l => {
+            const active = l.id === window.ADMIN_SELECTED_LESSON_ID;
+            return `
+                <button type="button" onclick="selectLessonFromAdminTree('${l.id}', '${l.grade || g}')"
+                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${active
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 hover:bg-indigo-50 text-slate-700 border border-slate-200'}">
+                    Bài ${l.num}
+                </button>
+            `;
+        }).join('');
+    }
+
+    onSelectLessonForTeacherAuthoring(window.ADMIN_SELECTED_LESSON_ID);
+}
+
+function onSelectLessonForTeacherAuthoring(forcedLessonId) {
+    const sel = document.getElementById('teacher-author-lesson-select');
+    const targetId = forcedLessonId || (sel ? sel.value : window.ADMIN_SELECTED_LESSON_ID);
+    const les = getLessonById(targetId);
     if (!les) return;
 
+    window.ADMIN_SELECTED_LESSON_ID = les.id;
+    window.ADMIN_EDITING_REGQUIZ_INDEX = -1;
+
+    const activeBadge = document.getElementById('teacher-studio-active-lesson-badge');
+    if (activeBadge) {
+        activeBadge.textContent = `Đang biên soạn: Khối ${les.grade || 10} — ${les.title}`;
+    }
+
+    const titleEl = document.getElementById('teacher-lesson-title-input');
     const sumEl = document.getElementById('teacher-lesson-summary');
     const knowEl = document.getElementById('teacher-lesson-knowledge');
     const exTitleEl = document.getElementById('teacher-ex-title');
+    const exDiffEl = document.getElementById('teacher-ex-diff');
     const exDescEl = document.getElementById('teacher-ex-desc');
     const exInEl = document.getElementById('teacher-ex-in');
     const exOutEl = document.getElementById('teacher-ex-out');
     const exCodeEl = document.getElementById('teacher-ex-code');
 
+    if (titleEl) titleEl.value = les.title || '';
     if (sumEl) sumEl.value = les.summary || '';
     if (knowEl) knowEl.value = (les.knowledge || '').replace(/<[^>]+>/g, '\n').trim();
     if (les.exercise) {
         if (exTitleEl) exTitleEl.value = les.exercise.title || '';
+        if (exDiffEl && les.difficulty) exDiffEl.value = les.difficulty;
         if (exDescEl) exDescEl.value = les.exercise.description || '';
         if (exInEl) exInEl.value = les.exercise.sample_in || '';
         if (exOutEl) exOutEl.value = les.exercise.sample_out || '';
         if (exCodeEl) exCodeEl.value = les.exercise.starter_code || '';
     }
+
+    renderTeacherLessonRegularQuizList(les);
+}
+
+// ============================================================================
+// SỬA & XÓA CÂU HỎI KIỂM TRA THƯỜNG XUYÊN TRONG BÀI HỌC + NẠP TỪ FILE WORD (.DOCX)
+// ============================================================================
+function renderTeacherLessonRegularQuizList(lesObj) {
+    const les = lesObj || getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    const listContainer = document.getElementById('teacher-lesson-regquiz-list');
+    if (!listContainer || !les) return;
+
+    const quizArr = Array.isArray(les.regular_quiz) ? les.regular_quiz : [];
+    if (quizArr.length === 0) {
+        listContainer.innerHTML = `<div class="p-3 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400 text-center">Chưa có câu hỏi kiểm tra thường xuyên. Hãy thêm mới hoặc nạp từ file .docx!</div>`;
+        return;
+    }
+
+    listContainer.innerHTML = quizArr.map((q, idx) => {
+        const ansLetter = String.fromCharCode(65 + (Number(q.ans) || 0));
+        return `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-2 text-xs">
+                <div class="space-y-0.5 flex-1">
+                    <div class="font-bold text-slate-900">Câu ${idx + 1}: ${q.q}</div>
+                    <div class="text-[11px] text-slate-600">
+                        ${(q.options || []).map((opt, oIdx) => `<span class="${oIdx === Number(q.ans) ? 'text-emerald-700 font-extrabold underline' : ''} mr-2">${String.fromCharCode(65 + oIdx)}. ${opt}</span>`).join('')}
+                    </div>
+                    <div class="text-[10px] text-indigo-700 font-semibold">✔ Đáp án: ${ansLetter} • ${q.exp || ''}</div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <button type="button" onclick="editTeacherRegularQuizQuestion(${idx})" class="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[11px] font-extrabold">
+                        ✏️ Sửa
+                    </button>
+                    <button type="button" onclick="deleteTeacherRegularQuizQuestion(${idx})" class="px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 text-[11px] font-extrabold">
+                        🗑️ Xóa
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function editTeacherRegularQuizQuestion(qIdx) {
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les || !Array.isArray(les.regular_quiz) || !les.regular_quiz[qIdx]) return;
+
+    const q = les.regular_quiz[qIdx];
+    window.ADMIN_EDITING_REGQUIZ_INDEX = qIdx;
+
+    document.getElementById('teacher-regq-text').value = q.q || '';
+    document.getElementById('teacher-regq-a').value = (q.options && q.options[0]) || '';
+    document.getElementById('teacher-regq-b').value = (q.options && q.options[1]) || '';
+    document.getElementById('teacher-regq-c').value = (q.options && q.options[2]) || '';
+    document.getElementById('teacher-regq-d').value = (q.options && q.options[3]) || '';
+    document.getElementById('teacher-regq-ans').value = String(q.ans ?? 0);
+    document.getElementById('teacher-regq-exp').value = q.exp || '';
+
+    const btn = document.getElementById('teacher-regq-submit-btn');
+    if (btn) {
+        btn.innerHTML = `<span>💾 Cập Nhật Câu Hỏi #${qIdx + 1} Đang Sửa</span>`;
+    }
+}
+
+function deleteTeacherRegularQuizQuestion(qIdx) {
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les || !Array.isArray(les.regular_quiz)) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa Câu ${qIdx + 1} khỏi Bài kiểm tra thường xuyên của "${les.title}"?`)) return;
+
+    les.regular_quiz.splice(qIdx, 1);
+    window.ADMIN_EDITING_REGQUIZ_INDEX = -1;
+    saveKntt10LessonsToStorage();
+    renderTeacherLessonRegularQuizList(les);
+    renderAdminLeftLessonTree();
+    renderKntt10GridView();
+}
+
+function clearTeacherLessonExercise() {
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les) return;
+    if (!confirm(`Xóa nội dung Bài tập thực hành hiện tại của "${les.title}" để soạn lại từ đầu?`)) return;
+
+    document.getElementById('teacher-ex-title').value = '';
+    document.getElementById('teacher-ex-desc').value = '';
+    document.getElementById('teacher-ex-in').value = '';
+    document.getElementById('teacher-ex-out').value = '';
+    document.getElementById('teacher-ex-code').value = '# Nhập code mẫu tại đây\n';
 }
 
 function saveTeacherLessonContentAndExercise() {
-    const sel = document.getElementById('teacher-author-lesson-select');
-    if (!sel) return;
-    const les = getLessonById(sel.value);
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
     if (!les) return;
 
+    const newTitle = document.getElementById('teacher-lesson-title-input')?.value.trim() || les.title;
     const summary = document.getElementById('teacher-lesson-summary')?.value.trim() || les.summary;
     const rawKnow = document.getElementById('teacher-lesson-knowledge')?.value.trim() || '';
     const exTitle = document.getElementById('teacher-ex-title')?.value.trim() || les.exercise.title;
+    const exDiff = document.getElementById('teacher-ex-diff')?.value || les.difficulty || 'Thông hiểu';
     const exDesc = document.getElementById('teacher-ex-desc')?.value.trim() || les.exercise.description;
     const exIn = document.getElementById('teacher-ex-in')?.value.trim() || '';
     const exOut = document.getElementById('teacher-ex-out')?.value.trim() || '';
     const exCode = document.getElementById('teacher-ex-code')?.value || '';
 
+    les.title = newTitle;
     les.summary = summary;
+    les.difficulty = exDiff;
     if (rawKnow) {
         les.knowledge = rawKnow.split(/\r?\n/).filter(Boolean).map(line => `<p class="mb-1.5">${line}</p>`).join('');
     }
@@ -1308,13 +1746,11 @@ function saveTeacherLessonContentAndExercise() {
 
     saveKntt10LessonsToStorage();
     initKntt10LessonsDatabase();
-    alert(`✅ Đã lưu Kiến thức & Bài tập thực hành cho "${les.title}"!\nHọc sinh vào học bài này sẽ nhận ngay nội dung mới.`);
+    alert(`✅ Đã lưu cập nhật Kiến thức & Bài tập thực hành cho "${les.title}"!`);
 }
 
 function addTeacherRegularQuizQuestionToLesson() {
-    const sel = document.getElementById('teacher-author-lesson-select');
-    if (!sel) return;
-    const les = getLessonById(sel.value);
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
     if (!les) return;
 
     const qText = (document.getElementById('teacher-regq-text')?.value || '').trim();
@@ -1331,14 +1767,25 @@ function addTeacherRegularQuizQuestionToLesson() {
     }
 
     if (!Array.isArray(les.regular_quiz)) les.regular_quiz = [];
-    les.regular_quiz.push({
+    const newQ = {
         q: qText,
         options: [optA, optB, optC || 'Phương án C', optD || 'Phương án D'],
         ans: ansIdx,
-        exp: expText || 'Theo kiến thức chuẩn SGK Tin học 10 Kết nối tri thức.'
-    });
+        exp: expText || 'Theo kiến thức chuẩn SGK Tin học THPT.'
+    };
+
+    if (window.ADMIN_EDITING_REGQUIZ_INDEX >= 0 && window.ADMIN_EDITING_REGQUIZ_INDEX < les.regular_quiz.length) {
+        les.regular_quiz[window.ADMIN_EDITING_REGQUIZ_INDEX] = newQ;
+        window.ADMIN_EDITING_REGQUIZ_INDEX = -1;
+        const btn = document.getElementById('teacher-regq-submit-btn');
+        if (btn) btn.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span>➕ Thêm / Lưu Câu Hỏi Kiểm Tra Thường Xuyên</span>`;
+    } else {
+        les.regular_quiz.push(newQ);
+    }
 
     saveKntt10LessonsToStorage();
+    renderTeacherLessonRegularQuizList(les);
+    renderAdminLeftLessonTree();
     renderKntt10GridView();
 
     document.getElementById('teacher-regq-text').value = '';
@@ -1347,6 +1794,265 @@ function addTeacherRegularQuizQuestionToLesson() {
     document.getElementById('teacher-regq-c').value = '';
     document.getElementById('teacher-regq-d').value = '';
     document.getElementById('teacher-regq-exp').value = '';
+}
 
-    alert(`✅ Đã thêm câu hỏi Kiểm tra thường xuyên mới vào "${les.title}" (Hiện có ${les.regular_quiz.length} câu)!`);
+// ============================================================================
+// NẠP TỪ FILE WORD (.DOCX) CHO TỪNG PHẦN TRONG BÀI HỌC:
+// 1. Kiến thức trọng tâm (.docx)
+// 2. Bài tập thực hành (.docx)
+// 3. Bài kiểm tra thường xuyên (.docx)
+// ============================================================================
+async function extractTextFromDocxOrTxtFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'docx' && typeof mammoth !== 'undefined') {
+        const arrayBuffer = await file.arrayBuffer();
+        const res = await mammoth.extractRawText({ arrayBuffer });
+        return (res.value || '').trim();
+    }
+    return (await file.text()).trim();
+}
+
+async function importLessonKnowledgeFromDocx(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les) return;
+
+    try {
+        const rawText = await extractTextFromDocxOrTxtFile(file);
+        if (!rawText) {
+            alert('Tệp Word (.docx) rỗng hoặc không đọc được nội dung!');
+            return;
+        }
+        const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const firstLine = lines[0] || les.summary;
+
+        document.getElementById('teacher-lesson-summary').value = firstLine.slice(0, 160);
+        document.getElementById('teacher-lesson-knowledge').value = rawText;
+
+        les.summary = firstLine.slice(0, 160);
+        les.knowledge = lines.map(l => `<p class="mb-1.5">${l}</p>`).join('');
+        saveKntt10LessonsToStorage();
+        renderKntt10GridView();
+
+        alert(`✅ Đã nạp thành công Kiến thức trọng tâm từ file "${file.name}" vào "${les.title}"!`);
+    } catch (err) {
+        alert('Lỗi đọc file Word (.docx): ' + err.message);
+    } finally {
+        event.target.value = '';
+    }
+}
+
+async function importLessonExerciseFromDocx(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les) return;
+
+    try {
+        const rawText = await extractTextFromDocxOrTxtFile(file);
+        if (!rawText) return;
+
+        let exTitle = les.exercise?.title || `Bài tập thực hành ${les.title}`;
+        let exDesc = '';
+        let exIn = '';
+        let exOut = '';
+        let exCode = '';
+        let mode = 'DESC';
+
+        const lines = rawText.split(/\r?\n/);
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            if (/^(Tên bài|Bài tập|Tiêu đề)\s*[:.]/i.test(line)) {
+                exTitle = line.replace(/^(Tên bài|Bài tập|Tiêu đề)\s*[:.]\s*/i, '').trim();
+            } else if (/^(Đề bài|Mô tả|Yêu cầu)\s*[:.]/i.test(line)) {
+                exDesc = line.replace(/^(Đề bài|Mô tả|Yêu cầu)\s*[:.]\s*/i, '').trim();
+                mode = 'DESC';
+            } else if (/^Input(\s*mẫu)?\s*[:.]/i.test(line)) {
+                exIn = line.replace(/^Input(\s*mẫu)?\s*[:.]\s*/i, '').trim();
+                mode = 'IN';
+            } else if (/^Output(\s*mẫu)?\s*[:.]/i.test(line)) {
+                exOut = line.replace(/^Output(\s*mẫu)?\s*[:.]\s*/i, '').trim();
+                mode = 'OUT';
+            } else if (/^Code(\s*mẫu)?\s*[:.]/i.test(line)) {
+                exCode = line.replace(/^Code(\s*mẫu)?\s*[:.]\s*/i, '').trim();
+                mode = 'CODE';
+            } else {
+                if (mode === 'CODE') exCode += (exCode ? '\n' : '') + rawLine;
+                else if (mode === 'DESC') exDesc += (exDesc ? '\n' : '') + line;
+            }
+        }
+
+        if (!exDesc) exDesc = rawText;
+
+        document.getElementById('teacher-ex-title').value = exTitle;
+        document.getElementById('teacher-ex-desc').value = exDesc;
+        if (exIn) document.getElementById('teacher-ex-in').value = exIn;
+        if (exOut) document.getElementById('teacher-ex-out').value = exOut;
+        if (exCode) document.getElementById('teacher-ex-code').value = exCode;
+
+        saveTeacherLessonContentAndExercise();
+        alert(`✅ Đã nạp Bài tập thực hành từ file "${file.name}" vào "${les.title}"!`);
+    } catch (err) {
+        alert('Lỗi nạp Bài tập từ file .docx: ' + err.message);
+    } finally {
+        event.target.value = '';
+    }
+}
+
+async function importLessonRegularQuizFromDocx(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const les = getLessonById(window.ADMIN_SELECTED_LESSON_ID);
+    if (!les) return;
+
+    try {
+        const rawText = await extractTextFromDocxOrTxtFile(file);
+        if (!rawText) return;
+
+        let importedQuestions = [];
+        if (typeof parseStructuredTextToBank === 'function') {
+            const parsed = parseStructuredTextToBank(rawText);
+            if (Array.isArray(parsed.part1) && parsed.part1.length > 0) {
+                importedQuestions = parsed.part1.map(q => ({
+                    q: q.q,
+                    options: q.options,
+                    ans: q.ans || 0,
+                    exp: q.exp || 'Theo chuẩn kiến thức SGK.'
+                }));
+            }
+        }
+
+        if (importedQuestions.length === 0) {
+            alert('Không tìm thấy câu hỏi trắc nghiệm nào trong file Word. Hãy định dạng câu hỏi theo mẫu:\nCâu 1: Nội dung câu hỏi?\n*A. Đáp án đúng\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D');
+            return;
+        }
+
+        if (!Array.isArray(les.regular_quiz)) les.regular_quiz = [];
+        les.regular_quiz.push(...importedQuestions);
+
+        saveKntt10LessonsToStorage();
+        renderTeacherLessonRegularQuizList(les);
+        renderAdminLeftLessonTree();
+        renderKntt10GridView();
+
+        alert(`✅ Đã nạp thành công ${importedQuestions.length} câu hỏi Kiểm tra thường xuyên từ file "${file.name}" vào "${les.title}"!`);
+    } catch (err) {
+        alert('Lỗi nạp Kiểm tra thường xuyên từ file .docx: ' + err.message);
+    } finally {
+        event.target.value = '';
+    }
+}
+
+// ============================================================================
+// QUẢN LÝ SỬA / XÓA / THÊM CÂU HỎI ĐỀ KIỂM TRA ĐỊNH KỲ (PHẦN I, II, III)
+// ============================================================================
+function renderPeriodicExamCrudList() {
+    const container = document.getElementById('periodic-exam-crud-list');
+    if (!container || typeof EXAM_DATA === 'undefined') return;
+
+    const p1Html = (EXAM_DATA.part1 || []).map((q, idx) => `
+        <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-start justify-between gap-3 text-xs">
+            <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-extrabold text-[10px]">PHẦN I • Câu ${idx + 1}</span>
+                    <span class="font-bold text-slate-900">${q.q}</span>
+                </div>
+                <div class="text-[11px] text-slate-600">
+                    ${(q.options || []).map((opt, oIdx) => `<span class="${oIdx === Number(q.ans) ? 'text-emerald-700 font-extrabold underline' : ''} mr-3">${String.fromCharCode(65 + oIdx)}. ${opt}</span>`).join('')}
+                </div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="editPeriodicExamQuestion('part1', ${idx})" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-[11px]">✏️ Sửa</button>
+                <button type="button" onclick="deletePeriodicExamQuestion('part1', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold text-[11px]">🗑️ Xóa</button>
+            </div>
+        </div>
+    `).join('');
+
+    const p2Html = (EXAM_DATA.part2 || []).map((q, idx) => `
+        <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-start justify-between gap-3 text-xs">
+            <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">PHẦN II (Đ/S) • Câu ${idx + 1}</span>
+                    <span class="font-bold text-slate-900">${q.context}</span>
+                </div>
+                <div class="text-[11px] text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    ${(q.items || []).map(it => `<span><strong>${it.sub})</strong> ${it.text} <em class="font-bold ${it.correct ? 'text-emerald-700' : 'text-rose-600'}">[${it.correct ? 'Đúng' : 'Sai'}]</em></span>`).join('')}
+                </div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="editPeriodicExamQuestion('part2', ${idx})" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-[11px]">✏️ Sửa</button>
+                <button type="button" onclick="deletePeriodicExamQuestion('part2', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold text-[11px]">🗑️ Xóa</button>
+            </div>
+        </div>
+    `).join('');
+
+    const p3Html = (EXAM_DATA.part3 || []).map((q, idx) => `
+        <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-start justify-between gap-3 text-xs">
+            <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-extrabold text-[10px]">PHẦN III (Trả lời ngắn) • Câu ${idx + 1}</span>
+                    <span class="font-bold text-slate-900">${q.q}</span>
+                </div>
+                <div class="text-[11px] text-emerald-700 font-extrabold">Đáp số chuẩn: ${q.ans} <span class="text-slate-500 font-normal">(${q.exp || ''})</span></div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="editPeriodicExamQuestion('part3', ${idx})" class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-[11px]">✏️ Sửa</button>
+                <button type="button" onclick="deletePeriodicExamQuestion('part3', ${idx})" class="px-2.5 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold text-[11px]">🗑️ Xóa</button>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = (p1Html + p2Html + p3Html) || `<div class="p-4 text-center text-xs text-slate-400">Đề thi định kỳ hiện đang trống.</div>`;
+}
+
+function deletePeriodicExamQuestion(partKey, idx) {
+    if (!EXAM_DATA[partKey] || !EXAM_DATA[partKey][idx]) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa câu hỏi số ${idx + 1} thuộc ${partKey.toUpperCase()} khỏi Đề kiểm tra định kỳ?`)) return;
+
+    EXAM_DATA[partKey].splice(idx, 1);
+    localStorage.setItem('thpt_custom_exam_v2', JSON.stringify(EXAM_DATA));
+    if (typeof renderExamQuestions === 'function') renderExamQuestions();
+    renderPeriodicExamCrudList();
+}
+
+function editPeriodicExamQuestion(partKey, idx) {
+    const q = EXAM_DATA[partKey] && EXAM_DATA[partKey][idx];
+    if (!q) return;
+
+    if (partKey === 'part1') {
+        const newQ = prompt('Sửa nội dung câu hỏi Phần I:', q.q);
+        if (newQ === null) return;
+        const optA = prompt('Phương án A:', q.options[0] || '');
+        const optB = prompt('Phương án B:', q.options[1] || '');
+        const optC = prompt('Phương án C:', q.options[2] || '');
+        const optD = prompt('Phương án D:', q.options[3] || '');
+        const ansLetter = prompt('Đáp án đúng (A, B, C hoặc D):', String.fromCharCode(65 + (q.ans || 0)));
+        const ansIdx = Math.max(0, ['A', 'B', 'C', 'D'].indexOf((ansLetter || 'A').trim().toUpperCase()));
+
+        q.q = newQ.trim() || q.q;
+        q.options = [optA || q.options[0], optB || q.options[1], optC || q.options[2], optD || q.options[3]];
+        q.ans = ansIdx;
+    } else if (partKey === 'part2') {
+        const newCtx = prompt('Sửa ngữ cảnh Câu hỏi Đúng/Sai (Phần II):', q.context);
+        if (newCtx === null) return;
+        q.context = newCtx.trim() || q.context;
+        (q.items || []).forEach(it => {
+            const t = prompt(`Nội dung ý ${it.sub}):`, it.text);
+            if (t !== null && t.trim()) it.text = t.trim();
+            const c = prompt(`Đáp án ý ${it.sub}) (Nhập D = Đúng, S = Sai):`, it.correct ? 'D' : 'S');
+            if (c !== null) it.correct = c.trim().toUpperCase().startsWith('D');
+        });
+    } else if (partKey === 'part3') {
+        const newQ = prompt('Sửa câu hỏi Trả lời ngắn (Phần III):', q.q);
+        if (newQ === null) return;
+        const newAns = prompt('Sửa đáp số chuẩn:', q.ans);
+        q.q = newQ.trim() || q.q;
+        if (newAns !== null) q.ans = newAns.trim();
+    }
+
+    localStorage.setItem('thpt_custom_exam_v2', JSON.stringify(EXAM_DATA));
+    if (typeof renderExamQuestions === 'function') renderExamQuestions();
+    renderPeriodicExamCrudList();
 }

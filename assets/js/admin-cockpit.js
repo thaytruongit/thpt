@@ -1196,17 +1196,20 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
 // --- 8. ĐIỀU KHIỂN BÀN LÀM VIỆC GIÁO VIÊN (OLM TEACHER PORTAL) ---
 function switchAdminSubTab(subId) {
     document.querySelectorAll('.admin-subpanel').forEach(el => el.classList.add('hidden'));
-    ['roster', 'curriculum', 'lab', 'gradebook', 'cloud'].forEach(id => {
+    ['hub', 'roster', 'curriculum', 'lab', 'gradebook', 'cloud'].forEach(id => {
         const btn = document.getElementById(`admin-subtab-${id}`) || document.getElementById(`admin-btn-${id}`);
         if (btn) {
             btn.className = id === subId
-                ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition-all'
-                : 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all';
+                ? 'px-4 py-2 rounded-full text-xs font-extrabold bg-indigo-600 text-white shadow-md transition-all'
+                : 'px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 transition-all';
         }
     });
 
     const target = document.getElementById(`admin-panel-${subId}`);
     if (target) target.classList.remove('hidden');
+    if (typeof renderAdminTopHorizontalSelectorBars === 'function') renderAdminTopHorizontalSelectorBars();
+    if (typeof renderAdminLeftLessonTree === 'function') renderAdminLeftLessonTree();
+    if (typeof renderPeriodicExamCrudList === 'function') renderPeriodicExamCrudList();
     lucide.createIcons();
 }
 
@@ -1221,6 +1224,9 @@ function renderAdminAllViews() {
     renderAdminGradebookEditor();
     renderSyncLogsUI();
     loadCloudConfigIntoForm();
+    if (typeof renderAdminTopHorizontalSelectorBars === 'function') renderAdminTopHorizontalSelectorBars();
+    if (typeof renderAdminLeftLessonTree === 'function') renderAdminLeftLessonTree();
+    if (typeof renderPeriodicExamCrudList === 'function') renderPeriodicExamCrudList();
 }
 
 function renderClassesManagerCards() {
@@ -1476,8 +1482,57 @@ function renderAdminProblemList() {
             <td class="px-3 py-2"><span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold text-[10px]">${p.type || 'PYTHON'}</span></td>
             <td class="px-3 py-2 text-center">${p.difficulty}</td>
             <td class="px-3 py-2 text-center font-bold">${p.competency}</td>
+            <td class="px-3 py-2 text-right space-x-1">
+                <button type="button" onclick="editAdminProblemItem('${p.track}', '${p.id}')" class="px-2 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px]">✏️ Sửa</button>
+                <button type="button" onclick="deleteAdminProblemItem('${p.track}', '${p.id}')" class="px-2 py-1 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-[11px]">🗑️ Xóa</button>
+            </td>
         </tr>
     `).join('');
+}
+
+function editAdminProblemItem(trackKey, probId) {
+    const list = APP_DATA[trackKey] || [];
+    const prob = list.find(p => p.id === probId);
+    if (!prob) return;
+
+    // Nếu bài tập gắn với bài học trong cây Bài học, mở trực tiếp trong Studio Bài học
+    if (prob.lesson_id && typeof selectLessonFromAdminTree === 'function') {
+        selectLessonFromAdminTree(prob.lesson_id, '10');
+        return;
+    }
+
+    const newTitle = prompt('Sửa tên bài tập:', prob.title);
+    if (newTitle === null) return;
+    const newDesc = prompt('Sửa yêu cầu đề bài:', prob.description);
+    const newIn = prompt('Sửa Input mẫu:', prob.sample_in || '');
+    const newOut = prompt('Sửa Output mẫu:', prob.sample_out || '');
+
+    if (newTitle.trim()) prob.title = newTitle.trim();
+    if (newDesc !== null && newDesc.trim()) prob.description = newDesc.trim();
+    if (newIn !== null) prob.sample_in = newIn.trim();
+    if (newOut !== null) prob.sample_out = newOut.trim();
+    prob.testcases = [{ input: prob.sample_in || '', output: prob.sample_out || '', hidden: false }];
+
+    renderAdminProblemList();
+    loadProblemList();
+}
+
+function deleteAdminProblemItem(trackKey, probId) {
+    const list = APP_DATA[trackKey] || [];
+    const idx = list.findIndex(p => p.id === probId);
+    if (idx < 0) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa bài tập "${list[idx].title}" (${probId}) khỏi ngân hàng đề?`)) return;
+
+    list.splice(idx, 1);
+    const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
+    if (Array.isArray(customProbs[trackKey])) {
+        customProbs[trackKey] = customProbs[trackKey].filter(p => p.id !== probId);
+        localStorage.setItem('thpt_custom_problems_v2', JSON.stringify(customProbs));
+    }
+
+    renderAdminProblemList();
+    renderLessonAssignmentManager();
+    loadProblemList();
 }
 
 async function addNewProblemAndSyncGitHub() {
