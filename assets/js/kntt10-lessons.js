@@ -473,7 +473,7 @@ const KNTT10_LESSONS_DEFAULT = [
         summary: 'Nhập dữ liệu từ bàn phím bằng hàm input(), chuyển đổi kiểu dữ liệu int(), float(), str() và kiểm tra kiểu bằng hàm type().',
         knowledge: `
             <h4>1. Hàm input() và Ép kiểu dữ liệu</h4>
-            <p>Hàm <code>input()</code> luôn trả về giá trị kiểu <strong>xâu kí tự (`str`)</strong>. Muốn tính toán số học, ta cần chuyển sang số nguyên bằng <code>int()</code> hoặc số thực bằng <code>float()</code>.</p>
+            <p>Hàm <code>input()</code> luôn trả về giá trị kiểu <strong>xâu kí tự (<code>str</code>)</strong>. Muốn tính toán số học, ta cần chuyển sang số nguyên bằng <code>int()</code> hoặc số thực bằng <code>float()</code>.</p>
         `,
         exercise: {
             id: 'ex_b18', type: 'ALGORITHM', title: 'Tính điểm trung bình môn Tin học từ 3 đầu điểm',
