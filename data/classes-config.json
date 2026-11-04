@@ -1,0 +1,54 @@
+[
+  {
+    "id": "10A1",
+    "name": "Lớp 10A1",
+    "grade": 10,
+    "track": "k10",
+    "track_label": "Khối 10: Lập trình Python cơ bản",
+    "academic_year": "2026 - 2027",
+    "exam_enabled": true,
+    "practice_enabled": true,
+    "assigned_problems": ["py10_01", "py10_02", "py10_03", "py10_04"],
+    "assigned_exam": true,
+    "deadline": "2026-11-15"
+  },
+  {
+    "id": "10A2",
+    "name": "Lớp 10A2",
+    "grade": 10,
+    "track": "k10",
+    "track_label": "Khối 10: Lập trình Python cơ bản",
+    "academic_year": "2026 - 2027",
+    "exam_enabled": true,
+    "practice_enabled": true,
+    "assigned_problems": ["py10_01", "py10_02"],
+    "assigned_exam": true,
+    "deadline": "2026-11-15"
+  },
+  {
+    "id": "11CS1",
+    "name": "Lớp 11CS1 (Định hướng CS)",
+    "grade": 11,
+    "track": "k11-cs",
+    "track_label": "Khối 11: Khoa học máy tính (Thuật toán & SQL)",
+    "academic_year": "2026 - 2027",
+    "exam_enabled": true,
+    "practice_enabled": true,
+    "assigned_problems": ["cs11_algo_01", "cs11_algo_02", "cs11_sql_01", "cs11_sql_02"],
+    "assigned_exam": true,
+    "deadline": "2026-11-20"
+  },
+  {
+    "id": "11ICT1",
+    "name": "Lớp 11ICT1 (Định hướng ICT)",
+    "grade": 11,
+    "track": "k11-ict",
+    "track_label": "Khối 11: Tin học ứng dụng (Thiết kế Web & CSDL)",
+    "academic_year": "2026 - 2027",
+    "exam_enabled": true,
+    "practice_enabled": true,
+    "assigned_problems": ["ict11_web_01", "ict11_web_02"],
+    "assigned_exam": true,
+    "deadline": "2026-11-20"
+  }
+]

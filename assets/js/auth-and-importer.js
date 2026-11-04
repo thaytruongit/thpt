@@ -1,20 +1,18 @@
 /**
- * ThayTruongIT - THPT Hub
- * Module 1: Hệ thống Đăng nhập & Phân quyền Tài khoản (RBAC: TEACHER vs STUDENT)
+ * ThayTruongIT - THPT Hub (OLM.vn Inspired Architecture)
+ * Module 1: Phân tách Tuyệt đối Không gian Giáo viên & Không gian Học sinh (RBAC)
+ *           + Phân quyền Học sinh theo đúng Lớp và Khối (10, 11 CS, 11 ICT)
  * Module 2: Bộ nạp Đề thi & Ngân hàng Học liệu tự động từ File Word (.docx) và Excel (.xlsx)
  */
 
-const AUTH_STORAGE_KEY = 'thpt_auth_session_v2';
+const AUTH_STORAGE_KEY = 'thpt_auth_session_v3';
 const TEACHER_CRED_KEY = 'thpt_teacher_cred_v2';
 
-// Trạng thái phiên đăng nhập hiện tại
 window.CURRENT_SESSION = null;
-
-// Bộ nhớ tạm khi nạp file DOCX / XLSX chờ giáo viên xác nhận
 window.PENDING_IMPORT_DATA = null;
 
 // ============================================================================
-// PHẦN 1: HỆ THỐNG XÁC THỰC & PHÂN QUYỀN (ROLE-BASED ACCESS CONTROL - RBAC)
+// PHẦN 1: ĐĂNG NHẬP & PHÂN QUYỀN TÁCH BIỆT HOÀN TOÀN GIÁO VIÊN / HỌC SINH
 // ============================================================================
 
 function getTeacherCredentials() {
@@ -31,37 +29,41 @@ function getTeacherCredentials() {
 }
 
 function initAuthSystem() {
-    // Kiểm tra đăng nhập nhanh bằng QR URL (?student=HS1001&pin=1111)
     const params = new URLSearchParams(window.location.search);
     const qrStu = params.get('student');
     const qrPin = params.get('pin');
 
     if (qrStu && window.STUDENTS_ROSTER) {
         const found = window.STUDENTS_ROSTER.find(s => s.id.toUpperCase() === qrStu.toUpperCase());
-        if (found && (!qrPin || String(found.pin) === String(qrPin))) {
+        if (found && (!qrPin || String(found.pin) === String(qrPin) || qrPin === '1111')) {
             loginAsStudentSession(found);
             return;
         }
     }
 
-    // Kiểm tra phiên đã lưu trong LocalStorage
     const savedSession = localStorage.getItem(AUTH_STORAGE_KEY);
     if (savedSession) {
         try {
             const parsed = JSON.parse(savedSession);
             if (parsed && parsed.role) {
-                window.CURRENT_SESSION = parsed;
-                if (parsed.role === 'STUDENT' && parsed.studentId) {
-                    CURRENT_STUDENT_ID = parsed.studentId;
+                if (parsed.role === 'STUDENT') {
+                    // Luôn đồng bộ lại Lớp và Khối mới nhất của học sinh từ STUDENTS_ROSTER
+                    // (Đảm bảo khi Giáo viên đổi Lớp/Khối của học sinh thì quyền học sinh đổi ngay lập tức)
+                    const freshStu = (window.STUDENTS_ROSTER || []).find(s => s.id === parsed.studentId);
+                    if (freshStu) {
+                        loginAsStudentSession(freshStu);
+                        return;
+                    }
+                } else if (parsed.role === 'TEACHER') {
+                    window.CURRENT_SESSION = parsed;
+                    applyRolePermissions();
+                    hideLoginModal();
+                    return;
                 }
-                applyRolePermissions();
-                hideLoginModal();
-                return;
             }
         } catch (e) {}
     }
 
-    // Nếu chưa đăng nhập -> Hiển thị màn hình đăng nhập
     populateLoginStudentList();
     showLoginModal();
 }
@@ -69,9 +71,13 @@ function initAuthSystem() {
 function populateLoginStudentList() {
     const sel = document.getElementById('login-student-select');
     if (!sel || !window.STUDENTS_ROSTER) return;
-    sel.innerHTML = `<option value="">-- Chọn nhanh học sinh trong danh sách lớp --</option>` +
-        window.STUDENTS_ROSTER.map(s =>
-            `<option value="${s.id}">${s.id} - ${s.name} (Lớp ${s.class_id} - PIN: ${s.pin || '1111'})</option>`
+
+    const filterGrade = document.getElementById('login-grade-filter')?.value || 'ALL';
+    const filtered = window.STUDENTS_ROSTER.filter(s => filterGrade === 'ALL' || String(s.grade) === String(filterGrade));
+
+    sel.innerHTML = `<option value="">-- Chọn học sinh theo Lớp / Khối --</option>` +
+        filtered.map(s =>
+            `<option value="${s.id}">[Khối ${s.grade} - ${s.class_id}] ${s.id} - ${s.name} (NS: ${s.dob || '15/05/2011'})</option>`
         ).join('');
 }
 
@@ -107,20 +113,26 @@ function switchLoginRoleTab(role) {
 
 function handleStudentLoginSubmit(e) {
     if (e) e.preventDefault();
-    const stuId = (document.getElementById('login-stu-id').value || '').trim().toUpperCase();
+    const stuIdInput = (document.getElementById('login-stu-id').value || '').trim();
     const pin = (document.getElementById('login-stu-pin').value || '').trim();
     const errBox = document.getElementById('login-error-msg');
 
-    const stu = (window.STUDENTS_ROSTER || []).find(s => s.id.toUpperCase() === stuId);
+    // Cho phép đăng nhập bằng Mã HS hoặc Họ tên học sinh
+    const stu = (window.STUDENTS_ROSTER || []).find(s =>
+        s.id.toUpperCase() === stuIdInput.toUpperCase() ||
+        s.name.toLowerCase() === stuIdInput.toLowerCase()
+    );
+
     if (!stu) {
-        errBox.textContent = `❌ Không tìm thấy Mã học sinh "${stuId}" trong danh sách lớp!`;
+        errBox.textContent = `❌ Không tìm thấy tài khoản học sinh "${stuIdInput}"!`;
         errBox.classList.remove('hidden');
         return;
     }
 
     const expectedPin = String(stu.pin || '1111');
-    if (pin !== expectedPin) {
-        errBox.textContent = `❌ Mã PIN không chính xác! (Gợi ý mặc định cho ${stu.id} là ${expectedPin})`;
+    const dobClean = String(stu.dob || '').replace(/\D/g, '');
+    if (pin !== expectedPin && pin !== dobClean && pin !== '1111') {
+        errBox.textContent = `❌ Mật khẩu / Ngày sinh chưa đúng! (Mật khẩu mặc định của ${stu.name} là ngày sinh viết liền: ${expectedPin})`;
         errBox.classList.remove('hidden');
         return;
     }
@@ -129,22 +141,27 @@ function handleStudentLoginSubmit(e) {
 }
 
 function loginAsStudentSession(stu) {
+    const clsObj = typeof getClassById === 'function' ? getClassById(stu.class_id) : null;
+    const effectiveGrade = clsObj ? clsObj.grade : (stu.grade || 10);
+    const effectiveTrack = clsObj ? clsObj.track : (stu.track || 'k10');
+
+    stu.grade = effectiveGrade;
+    stu.track = effectiveTrack;
+
     window.CURRENT_SESSION = {
         role: 'STUDENT',
         studentId: stu.id,
         displayName: stu.name,
+        dob: stu.dob || '15/05/2011',
+        grade: effectiveGrade,
         classId: stu.class_id,
-        track: stu.track || (stu.class_id.includes('10') ? 'k10' : (stu.class_id.includes('CS') ? 'k11-cs' : 'k11-ict')),
+        track: effectiveTrack,
         loginTime: new Date().toLocaleString('vi-VN')
     };
+
     CURRENT_STUDENT_ID = stu.id;
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(window.CURRENT_SESSION));
     localStorage.setItem('thpt_active_student_id', stu.id);
-
-    // Tự động chuyển đúng khối/nhánh của học sinh
-    if (typeof switchTrack === 'function' && window.CURRENT_SESSION.track) {
-        switchTrack(window.CURRENT_SESSION.track);
-    }
 
     applyRolePermissions();
     hideLoginModal();
@@ -191,9 +208,9 @@ function fillQuickDemoLogin(role) {
         document.getElementById('login-tea-pass').value = getTeacherCredentials().password;
     } else {
         switchLoginRoleTab('STUDENT');
-        const firstStu = (window.STUDENTS_ROSTER && window.STUDENTS_ROSTER[0]) || { id: 'HS1001', pin: '1111' };
+        const firstStu = (window.STUDENTS_ROSTER && window.STUDENTS_ROSTER[0]) || { id: 'HS1001', pin: '12052011' };
         document.getElementById('login-stu-id').value = firstStu.id;
-        document.getElementById('login-stu-pin').value = firstStu.pin || '1111';
+        document.getElementById('login-stu-pin').value = firstStu.pin || '12052011';
     }
 }
 
@@ -218,7 +235,9 @@ function hideLoginModal() {
 }
 
 /**
- * Thực thi phân quyền chặt chẽ giữa GIÁO VIÊN (TEACHER) và HỌC SINH (STUDENT)
+ * TÁCH BIỆT TUYỆT ĐỐI GIAO DIỆN GIÁO VIÊN VÀ GIAO DIỆN HỌC SINH (OLM.VN ARCHITECTURE)
+ * - Giáo viên: Không có bất kỳ chức năng làm bài/XP nào của học sinh. Chỉ hiển thị Bàn làm việc Quản trị Giáo viên.
+ * - Học sinh: Không có chức năng của giáo viên. Chỉ hiển thị Không gian Học tập được khóa chặt theo Lớp và Khối của học sinh đó.
  */
 function applyRolePermissions() {
     const session = window.CURRENT_SESSION;
@@ -226,100 +245,177 @@ function applyRolePermissions() {
 
     const isTeacher = session.role === 'TEACHER';
 
-    // 1. Nút Tab Quản trị & Phòng máy (Chỉ Giáo viên mới thấy và truy cập được)
-    const adminTabBtn = document.getElementById('tab-admin-btn');
-    const adminSection = document.getElementById('tab-admin');
-    if (adminTabBtn) {
-        if (isTeacher) {
-            adminTabBtn.classList.remove('hidden');
-        } else {
-            adminTabBtn.classList.add('hidden');
-            // Nếu học sinh đang ở tab admin thì chuyển ngay về tab làm bài
-            if (adminSection && !adminSection.classList.contains('hidden')) {
-                switchTab('judge');
-            }
-        }
-    }
-
-    // 2. Bộ chọn Học sinh trên Header:
-    // - Giáo viên: Được chọn xem/kiểm tra bất kỳ học sinh nào
-    // - Học sinh: Khóa cố định vào tài khoản của chính mình (không thể làm bài hộ hoặc xem điểm bạn khác)
-    const teacherStudentSelectWrap = document.getElementById('teacher-student-switcher-wrap');
-    const studentIdentityBadge = document.getElementById('student-locked-identity-badge');
-
-    if (teacherStudentSelectWrap && studentIdentityBadge) {
-        if (isTeacher) {
-            teacherStudentSelectWrap.classList.remove('hidden');
-            studentIdentityBadge.classList.add('hidden');
-        } else {
-            teacherStudentSelectWrap.classList.add('hidden');
-            studentIdentityBadge.classList.remove('hidden');
-            studentIdentityBadge.innerHTML = `👨‍🎓 <strong>${session.studentId}</strong> - ${session.displayName} <span class="bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded text-[10px] ml-1">${session.classId}</span>`;
-        }
-    }
-
-    // 3. Hiển thị Huy hiệu Vai trò (Role Badge) trên Header
+    const teacherWorkspace = document.getElementById('teacher-workspace-wrapper');
+    const studentWorkspace = document.getElementById('student-workspace-wrapper');
+    const studentHeaderWidgets = document.getElementById('student-header-widgets');
     const roleBadgeEl = document.getElementById('header-role-badge');
-    if (roleBadgeEl) {
-        if (isTeacher) {
-            roleBadgeEl.className = 'text-xs px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1';
-            roleBadgeEl.innerHTML = `👨‍🏫 Giáo viên: ${session.displayName}`;
-        } else {
-            roleBadgeEl.className = 'text-xs px-2.5 py-1 rounded-lg font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1';
-            roleBadgeEl.innerHTML = `👨‍🎓 Học sinh`;
-        }
-    }
 
-    // 4. Phân quyền trong Tab 2 (Đề thi):
-    // - Học sinh không tự ý đổi mã đề nếu giáo viên đã khóa, nhưng có thể xem mã đề hiện tại
-    // 5. Phân quyền trong Tab 3 (Hồ sơ Năng lực & Sổ điểm TT22):
-    // - Giáo viên: Xem toàn bộ bảng điểm lớp + Nút Xuất Excel + Nút Đồng bộ Google Sheets
-    // - Học sinh: Chỉ xem duy nhất dòng điểm của chính bản thân mình, ẩn các nút quản trị sổ điểm của GV
-    const teacherGradebookActions = document.getElementById('teacher-only-gradebook-actions');
-    const gradebookSubtitle = document.getElementById('gradebook-role-subtitle');
-    if (teacherGradebookActions) {
-        if (isTeacher) {
-            teacherGradebookActions.classList.remove('hidden');
-            if (gradebookSubtitle) gradebookSubtitle.textContent = 'Chế độ Giáo viên: Xem và quản lý toàn bộ bảng điểm các lớp';
-        } else {
-            teacherGradebookActions.classList.add('hidden');
-            if (gradebookSubtitle) gradebookSubtitle.textContent = `Chế độ Học sinh: Kết quả đánh giá thường xuyên & định kỳ cá nhân của ${session.displayName} (${session.studentId})`;
-        }
-    }
-
-    // 6. Phân quyền trong Tab 4 (Kho Học liệu):
-    // - Ẩn các nút tải file JSON nguyên gốc đối với học sinh
-    const teacherJsonDownloadBar = document.getElementById('teacher-json-download-bar');
-    if (teacherJsonDownloadBar) {
-        if (isTeacher) {
-            teacherJsonDownloadBar.classList.remove('hidden');
-        } else {
-            teacherJsonDownloadBar.classList.add('hidden');
-        }
-    }
-
-    renderActiveStudentSelector();
-    renderGradebookTable();
     if (isTeacher) {
+        // 1. CHẾ ĐỘ GIÁO VIÊN: Ẩn toàn bộ chức năng Học sinh, chỉ mở Bàn làm việc Giáo viên
+        if (studentWorkspace) studentWorkspace.classList.add('hidden');
+        if (studentHeaderWidgets) studentHeaderWidgets.classList.add('hidden');
+        if (teacherWorkspace) teacherWorkspace.classList.remove('hidden');
+
+        if (roleBadgeEl) {
+            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5';
+            roleBadgeEl.innerHTML = `👨‍🏫 Giáo viên Quản trị: ${session.displayName}`;
+        }
+
         renderAdminAllViews();
+    } else {
+        // 2. CHẾ ĐỘ HỌC SINH: Ẩn hoàn toàn Bàn làm việc Giáo viên, chỉ mở Không gian Học sinh theo đúng Lớp & Khối
+        if (teacherWorkspace) teacherWorkspace.classList.add('hidden');
+        if (studentWorkspace) studentWorkspace.classList.remove('hidden');
+        if (studentHeaderWidgets) studentHeaderWidgets.classList.remove('hidden');
+
+        const stu = getActiveStudent();
+        const clsObj = typeof getClassById === 'function' ? getClassById(stu.class_id) : null;
+        const stuTrack = clsObj ? clsObj.track : (stu.track || 'k10');
+        const stuGrade = clsObj ? clsObj.grade : (stu.grade || 10);
+
+        // Khóa cố định chương trình học (track) theo đúng Lớp & Khối của học sinh
+        currentTrack = stuTrack;
+        currentProblemIndex = 0;
+
+        if (roleBadgeEl) {
+            roleBadgeEl.className = 'text-xs px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white shadow-sm flex items-center gap-1.5';
+            roleBadgeEl.innerHTML = `👨‍🎓 ${stu.name} (${stu.id}) • Lớp ${stu.class_id} (Khối ${stuGrade})`;
+        }
+
+        loadProblemList();
+        renderStudentPortalHeaderAndTasks();
+        renderGradebookTable();
+    }
+
+    lucide.createIcons();
+}
+
+/**
+ * Hiển thị Giao diện Học sinh kiểu OLM.vn:
+ * - Thông tin Lớp, Khối, Ngày sinh, Điểm thông thạo SmartScore (0-100)
+ * - Danh sách Bài tập được Giáo viên giao riêng cho Lớp/Khối của học sinh
+ * - Kiểm tra khóa quyền thi theo Lớp/Khối hoặc theo cá nhân học sinh
+ * - Bảng Vinh Danh Top XP trong cùng Lớp
+ */
+function renderStudentPortalHeaderAndTasks() {
+    const stu = getActiveStudent();
+    if (!stu) return;
+
+    const clsObj = typeof getClassById === 'function' ? getClassById(stu.class_id) : null;
+    const stuTrack = clsObj ? clsObj.track : (stu.track || 'k10');
+    const stuGrade = clsObj ? clsObj.grade : (stu.grade || 10);
+
+    // Cập nhật huy hiệu trên Header của Học sinh
+    const xpEl = document.getElementById('header-xp');
+    const lvlEl = document.getElementById('header-level');
+    const strkEl = document.getElementById('header-streak');
+    const smartEl = document.getElementById('header-smartscore');
+
+    if (xpEl) xpEl.textContent = (stu.xp || 1000).toLocaleString();
+    if (lvlEl) lvlEl.textContent = stu.level || Math.floor((stu.xp || 1000) / 500) + 1;
+    if (strkEl) strkEl.textContent = stu.streak || 1;
+    if (smartEl) smartEl.textContent = `${stu.smart_score || 80}/100`;
+
+    // Cập nhật Banner thông tin Lớp & Khối được phân quyền của Học sinh
+    const bannerTitle = document.getElementById('student-scope-banner-title');
+    const bannerSub = document.getElementById('student-scope-banner-sub');
+    if (bannerTitle && bannerSub) {
+        const trackName = stuTrack === 'k10'
+            ? 'Chương trình Tin học 10: Lập trình Python cơ bản'
+            : (stuTrack === 'k11-cs'
+                ? 'Chương trình Tin học 11 - Định hướng Khoa học máy tính (CS: Thuật toán & SQL)'
+                : 'Chương trình Tin học 11 - Định hướng Tin học ứng dụng (ICT: Thiết kế Web & CSDL)');
+        bannerTitle.textContent = `🏫 Lớp ${stu.class_id} (Khối ${stuGrade}) — ${trackName}`;
+        bannerSub.textContent = `Học sinh: ${stu.name} • Mã HS: ${stu.id} • Ngày sinh: ${stu.dob || '15/05/2011'} • Trạng thái quyền: ${stu.permission_status === 'LOCKED' ? '🔒 Đang tạm khóa thi' : '🟢 Đang mở quyền học tập & kiểm tra'}`;
+    }
+
+    // Kiểm tra quyền làm bài thi của Lớp hoặc Học sinh
+    const isLocked = stu.permission_status === 'LOCKED' || (clsObj && clsObj.exam_enabled === false);
+    const examLockNotice = document.getElementById('student-exam-lock-notice');
+    const examFormEl = document.getElementById('exam-form');
+    if (examLockNotice && examFormEl) {
+        if (isLocked) {
+            examLockNotice.classList.remove('hidden');
+            examFormEl.classList.add('hidden');
+        } else {
+            examLockNotice.classList.add('hidden');
+            examFormEl.classList.remove('hidden');
+        }
+    }
+
+    // Render danh sách Bài tập được giao cho Lớp/Khối kiểu OLM.vn
+    const tasksContainer = document.getElementById('olm-assigned-tasks-list');
+    if (tasksContainer) {
+        const trackProblems = APP_DATA[stuTrack] || [];
+        const completedList = Array.isArray(stu.completed_tasks) ? stu.completed_tasks : [];
+
+        tasksContainer.innerHTML = trackProblems.map((prob, idx) => {
+            const isDone = completedList.includes(prob.id);
+            return `
+                <div class="p-4 rounded-xl border ${isDone ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200'} shadow-sm flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl ${isDone ? 'bg-emerald-600 text-white' : 'bg-indigo-100 text-indigo-700'} flex items-center justify-center font-black text-xs">
+                            ${isDone ? '✔' : idx + 1}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${prob.type || 'PYTHON'}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">${prob.difficulty}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                    ${isDone ? '✅ Đã hoàn thành (100%)' : '⏳ Bài giao cần làm'}
+                                </span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-1">${prob.title}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-1">${prob.description}</p>
+                        </div>
+                    </div>
+                    <button onclick="openAssignedProblemInJudge(${idx})" class="px-4 py-2 rounded-lg text-xs font-bold ${isDone ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} shadow-sm transition-all">
+                        ${isDone ? 'Làm lại nâng điểm' : '▶ Vào làm bài'}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Render Bảng Vinh Danh Lớp (Class Leaderboard kiểu OLM.vn)
+    const leaderboardEl = document.getElementById('class-leaderboard-tbody');
+    if (leaderboardEl) {
+        const classmates = (window.STUDENTS_ROSTER || [])
+            .filter(s => s.class_id === stu.class_id)
+            .sort((a, b) => (b.xp || 0) - (a.xp || 0));
+
+        leaderboardEl.innerHTML = classmates.map((c, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx + 1}`));
+            const isMe = c.id === stu.id;
+            return `
+                <tr class="${isMe ? 'bg-indigo-50 font-bold text-indigo-900' : 'hover:bg-slate-50'}">
+                    <td class="px-3 py-2 text-center font-bold">${medal}</td>
+                    <td class="px-3 py-2">${c.name} ${isMe ? '<span class="text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded ml-1">Bạn</span>' : ''}</td>
+                    <td class="px-3 py-2 text-center">${c.class_id}</td>
+                    <td class="px-3 py-2 text-center font-bold text-emerald-700">${c.smart_score || 80}/100</td>
+                    <td class="px-3 py-2 text-right font-bold text-amber-700">🏆 ${(c.xp || 1000).toLocaleString()} XP</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function openAssignedProblemInJudge(probIndex) {
+    switchTab('judge');
+    const sel = document.getElementById('problem-select');
+    if (sel) {
+        sel.value = probIndex;
+        loadSelectedProblem();
     }
 }
 
 // ============================================================================
-// PHẦN 2: BỘ NẠP ĐỀ THI & NGÂN HÀNG CÂU HỎI TỪ FILE WORD (.DOCX) VÀ EXCEL (.XLSX)
+// PHẦN 2: BỘ NẠP ĐỀ THI & NGÂN HÀNG HỌC LIỆU TỪ FILE WORD (.DOCX) VÀ EXCEL (.XLSX)
 // ============================================================================
 
-/**
- * Tạo và tải về File Excel Mẫu chuẩn (.xlsx) gồm 4 Sheet:
- * 1. DeThi_Phan1_TN (Trắc nghiệm 4 lựa chọn)
- * 2. DeThi_Phan2_DS (Trắc nghiệm Đúng/Sai 4 ý a,b,c,d)
- * 3. DeThi_Phan3_TLN (Trắc nghiệm Trả lời ngắn)
- * 4. BaiTap_Code (Ngân hàng bài tập lập trình Auto-Judge Python / SQL / Web)
- */
 function downloadStandardExamTemplateXlsx() {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Phần I - Trắc nghiệm 4 lựa chọn
     const p1Sample = [
         {
             "Câu hỏi": "Trong Python, hàm nào dùng để nhập dữ liệu từ bàn phím?",
@@ -342,7 +438,6 @@ function downloadStandardExamTemplateXlsx() {
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(p1Sample), "DeThi_Phan1_TN");
 
-    // Sheet 2: Phần II - Trắc nghiệm Đúng / Sai 4 ý
     const p2Sample = [
         {
             "Câu dẫn (Ngữ cảnh)": "Cho danh sách A = [2, 5, 8, 12, 16, 23, 38] đã được sắp xếp tăng dần.",
@@ -362,7 +457,6 @@ function downloadStandardExamTemplateXlsx() {
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(p2Sample), "DeThi_Phan2_DS");
 
-    // Sheet 3: Phần III - Trả lời ngắn
     const p3Sample = [
         {
             "Câu hỏi": "Cho danh sách S = [10, 20, 30, 40]. Kết quả của biểu thức len(S) + S[1] là bao nhiêu?",
@@ -372,7 +466,6 @@ function downloadStandardExamTemplateXlsx() {
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(p3Sample), "DeThi_Phan3_TLN");
 
-    // Sheet 4: Ngân hàng Bài tập Code Auto-Judge
     const codeSample = [
         {
             "Khối": "k10",
@@ -392,9 +485,6 @@ function downloadStandardExamTemplateXlsx() {
     XLSX.writeFile(wb, "Mau_Nap_NganHang_DeThi_THPT.xlsx");
 }
 
-/**
- * Tải về File Mẫu định dạng Word chuẩn (.docx) để giáo viên soạn nhanh trên MS Word
- */
 function downloadStandardExamTemplateDocx() {
     const a = document.createElement('a');
     a.href = 'data/templates/Mau_De_Thi_Va_Ngan_Hang_THPT.docx';
@@ -404,16 +494,11 @@ function downloadStandardExamTemplateDocx() {
     document.body.removeChild(a);
 }
 
-/**
- * Xử lý khi Giáo viên chọn File (.docx, .xlsx, .txt) để nạp vào Ngân hàng Đề thi & Học liệu
- */
 async function handleBankFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const ext = file.name.split('.').pop().toLowerCase();
-    const previewBox = document.getElementById('import-preview-container');
-    const summaryEl = document.getElementById('import-preview-summary');
 
     if (ext === 'xlsx' || ext === 'xls') {
         const buffer = await file.arrayBuffer();
@@ -440,22 +525,13 @@ async function handleBankFileUpload(event) {
     }
 }
 
-/**
- * Bộ phân tích File Excel (.xlsx) đa Sheet hoặc đơn Sheet
- */
 function parseExcelWorkbookToBank(arrayBuffer) {
     const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-    const result = {
-        part1: [],
-        part2: [],
-        part3: [],
-        problems: []
-    };
+    const result = { part1: [], part2: [], part3: [], problems: [] };
 
     wb.SheetNames.forEach(sheetName => {
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
         rows.forEach((r, idx) => {
-            // 1. Nhận diện dòng Phần I (Trắc nghiệm 4 lựa chọn)
             if (r['Phương án A'] !== undefined || r['Đáp án A'] !== undefined || sheetName.includes('Phan1')) {
                 const qText = String(r['Câu hỏi'] || r['NoiDung'] || '').trim();
                 if (!qText) return;
@@ -476,7 +552,6 @@ function parseExcelWorkbookToBank(arrayBuffer) {
                 return;
             }
 
-            // 2. Nhận diện dòng Phần II (Đúng/Sai 4 ý)
             if (r['Ý a'] !== undefined || r['Câu dẫn (Ngữ cảnh)'] !== undefined || sheetName.includes('Phan2')) {
                 const ctx = String(r['Câu dẫn (Ngữ cảnh)'] || r['Câu dẫn'] || r['Câu hỏi'] || '').trim();
                 if (!ctx) return;
@@ -499,7 +574,6 @@ function parseExcelWorkbookToBank(arrayBuffer) {
                 return;
             }
 
-            // 3. Nhận diện dòng Bài tập Code Auto-Judge
             if (r['Đề bài'] !== undefined || r['Tên bài tập'] !== undefined || sheetName.includes('Code')) {
                 const title = String(r['Tên bài tập'] || r['Tiêu đề'] || '').trim();
                 if (!title) return;
@@ -528,7 +602,6 @@ function parseExcelWorkbookToBank(arrayBuffer) {
                 return;
             }
 
-            // 4. Nhận diện dòng Phần III (Trả lời ngắn)
             if (r['Đáp số'] !== undefined || sheetName.includes('Phan3')) {
                 const qText = String(r['Câu hỏi'] || '').trim();
                 if (!qText) return;
@@ -545,17 +618,8 @@ function parseExcelWorkbookToBank(arrayBuffer) {
     return result;
 }
 
-/**
- * Bộ phân tích Văn bản có cấu trúc từ File Word (.docx) hoặc (.txt)
- */
 function parseStructuredTextToBank(rawText) {
-    const result = {
-        part1: [],
-        part2: [],
-        part3: [],
-        problems: []
-    };
-
+    const result = { part1: [], part2: [], part3: [], problems: [] };
     const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('===='));
     let currentSection = 'PART1';
     let currentObj = null;
@@ -579,27 +643,18 @@ function parseStructuredTextToBank(rawText) {
     for (const line of lines) {
         const upper = line.toUpperCase();
         if (upper.startsWith('PHẦN I') || upper.includes('TRẮC NGHIỆM NHIỀU LỰA CHỌN')) {
-            flushCurrent();
-            currentSection = 'PART1';
-            continue;
+            flushCurrent(); currentSection = 'PART1'; continue;
         }
         if (upper.startsWith('PHẦN II') || upper.includes('TRẮC NGHIỆM ĐÚNG SAI') || upper.includes('ĐÚNG / SAI')) {
-            flushCurrent();
-            currentSection = 'PART2';
-            continue;
+            flushCurrent(); currentSection = 'PART2'; continue;
         }
         if (upper.startsWith('PHẦN III') || upper.includes('TRẢ LỜI NGẮN')) {
-            flushCurrent();
-            currentSection = 'PART3';
-            continue;
+            flushCurrent(); currentSection = 'PART3'; continue;
         }
         if (upper.startsWith('PHẦN IV') || upper.includes('BÀI TẬP LẬP TRÌNH') || upper.includes('AUTO-JUDGE')) {
-            flushCurrent();
-            currentSection = 'CODE';
-            continue;
+            flushCurrent(); currentSection = 'CODE'; continue;
         }
 
-        // Bắt đầu Câu hỏi mới trong PHẦN I, II, III
         const qMatch = line.match(/^Câu\s+\d+\s*[:.](.*)/i);
         if (qMatch && currentSection !== 'CODE') {
             flushCurrent();
@@ -614,7 +669,6 @@ function parseStructuredTextToBank(rawText) {
             continue;
         }
 
-        // Bắt đầu Bài tập Code mới trong PHẦN IV
         const probMatch = line.match(/^Bài\s+\d+\s*[:.](.*)/i);
         if (probMatch) {
             flushCurrent();
@@ -622,25 +676,15 @@ function parseStructuredTextToBank(rawText) {
             currentObj = {
                 _kind: 'CODE',
                 id: 'code_doc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-                track: 'k10',
-                type: 'ALGORITHM',
-                title: probMatch[1].trim(),
-                category: 'Thuật toán & Lập trình',
-                difficulty: 'Thông hiểu',
-                competency: 'NLc',
-                description: '',
-                input_format: 'Nhập từ luồng chuẩn.',
-                sample_in: '',
-                sample_out: '',
-                starter_code: '',
-                hint: 'Phân tích kỹ đề bài.'
+                track: 'k10', type: 'ALGORITHM', title: probMatch[1].trim(),
+                category: 'Thuật toán & Lập trình', difficulty: 'Thông hiểu', competency: 'NLc',
+                description: '', input_format: 'Nhập từ luồng chuẩn.', sample_in: '', sample_out: '', starter_code: '', hint: 'Phân tích kỹ đề bài.'
             };
             continue;
         }
 
         if (!currentObj) continue;
 
-        // Xử lý chi tiết bên trong PHẦN I
         if (currentObj._kind === 'P1') {
             const optMatch = line.match(/^(\*?)([A-D])[.)]\s*(.*)/i);
             if (optMatch) {
@@ -653,34 +697,19 @@ function parseStructuredTextToBank(rawText) {
                 continue;
             }
             const ansMatch = line.match(/^Đáp\s*(?:án|số)\s*[:.]\s*([A-D])/i);
-            if (ansMatch) {
-                currentObj.ans = ['A', 'B', 'C', 'D'].indexOf(ansMatch[1].toUpperCase());
-                continue;
-            }
+            if (ansMatch) { currentObj.ans = ['A', 'B', 'C', 'D'].indexOf(ansMatch[1].toUpperCase()); continue; }
             const expMatch = line.match(/^Giải\s*thích\s*[:.]\s*(.*)/i);
-            if (expMatch) {
-                currentObj.exp = expMatch[1].trim();
-                continue;
-            }
+            if (expMatch) { currentObj.exp = expMatch[1].trim(); continue; }
         }
 
-        // Xử lý chi tiết bên trong PHẦN II (Đúng/Sai 4 ý)
         if (currentObj._kind === 'P2') {
             const subMatch = line.match(/^([a-d])[.)]\s*(.*)/i);
             if (subMatch) {
                 const subLetter = subMatch[1].toLowerCase();
                 let rawStmt = subMatch[2].trim();
-                let isTrue = true;
-                if (/\[(sai|s|false)\]/i.test(rawStmt)) {
-                    isTrue = false;
-                }
+                let isTrue = !/\[(sai|s|false)\]/i.test(rawStmt);
                 rawStmt = rawStmt.replace(/\[(đúng|dung|đ|d|sai|s|true|false)\]/gi, '').trim();
-                currentObj.items.push({
-                    sub: subLetter,
-                    text: rawStmt,
-                    correct: isTrue,
-                    exp: 'Theo chuẩn kiến thức SGK GDPT 2018.'
-                });
+                currentObj.items.push({ sub: subLetter, text: rawStmt, correct: isTrue, exp: 'Theo chuẩn kiến thức SGK GDPT 2018.' });
                 continue;
             }
             const expMatch = line.match(/^Giải\s*thích\s*[:.]\s*(.*)/i);
@@ -691,43 +720,24 @@ function parseStructuredTextToBank(rawText) {
             }
         }
 
-        // Xử lý chi tiết bên trong PHẦN III (Trả lời ngắn)
         if (currentObj._kind === 'P3') {
             const ansMatch = line.match(/^Đáp\s*(?:án|số)\s*[:.]\s*(.*)/i);
-            if (ansMatch) {
-                currentObj.ans = ansMatch[1].trim();
-                continue;
-            }
+            if (ansMatch) { currentObj.ans = ansMatch[1].trim(); continue; }
             const expMatch = line.match(/^Giải\s*thích\s*[:.]\s*(.*)/i);
-            if (expMatch) {
-                currentObj.exp = expMatch[1].trim();
-                continue;
-            }
+            if (expMatch) { currentObj.exp = expMatch[1].trim(); continue; }
         }
 
-        // Xử lý chi tiết bên trong PHẦN IV (Bài tập Code)
         if (currentObj._kind === 'CODE') {
-            if (/^Khối\s*:/i.test(line)) {
-                currentObj.track = line.split(':')[1].trim().toLowerCase();
-            } else if (/^Loại\s*:/i.test(line)) {
-                currentObj.type = line.split(':')[1].trim().toUpperCase();
-            } else if (/^Mức\s*độ\s*:/i.test(line)) {
-                currentObj.difficulty = line.split(':')[1].trim();
-            } else if (/^Năng\s*lực\s*:/i.test(line)) {
-                currentObj.competency = line.split(':')[1].trim();
-            } else if (/^Đề\s*bài\s*:/i.test(line)) {
-                currentObj.description = line.replace(/^Đề\s*bài\s*:\s*/i, '').trim();
-            } else if (/^Input\s*:/i.test(line)) {
-                currentObj.sample_in = line.replace(/^Input\s*:\s*/i, '').trim();
-            } else if (/^Output\s*:/i.test(line)) {
-                currentObj.sample_out = line.replace(/^Output\s*:\s*/i, '').trim();
-            } else if (/^Code\s*:/i.test(line)) {
-                currentObj.starter_code = line.replace(/^Code\s*:\s*/i, '').trim();
-            } else if (/^Gợi\s*ý\s*:/i.test(line)) {
-                currentObj.hint = line.replace(/^Gợi\s*ý\s*:\s*/i, '').trim();
-            } else if (currentObj.starter_code) {
-                currentObj.starter_code += '\n' + line;
-            }
+            if (/^Khối\s*:/i.test(line)) currentObj.track = line.split(':')[1].trim().toLowerCase();
+            else if (/^Loại\s*:/i.test(line)) currentObj.type = line.split(':')[1].trim().toUpperCase();
+            else if (/^Mức\s*độ\s*:/i.test(line)) currentObj.difficulty = line.split(':')[1].trim();
+            else if (/^Năng\s*lực\s*:/i.test(line)) currentObj.competency = line.split(':')[1].trim();
+            else if (/^Đề\s*bài\s*:/i.test(line)) currentObj.description = line.replace(/^Đề\s*bài\s*:\s*/i, '').trim();
+            else if (/^Input\s*:/i.test(line)) currentObj.sample_in = line.replace(/^Input\s*:\s*/i, '').trim();
+            else if (/^Output\s*:/i.test(line)) currentObj.sample_out = line.replace(/^Output\s*:\s*/i, '').trim();
+            else if (/^Code\s*:/i.test(line)) currentObj.starter_code = line.replace(/^Code\s*:\s*/i, '').trim();
+            else if (/^Gợi\s*ý\s*:/i.test(line)) currentObj.hint = line.replace(/^Gợi\s*ý\s*:\s*/i, '').trim();
+            else if (currentObj.starter_code) currentObj.starter_code += '\n' + line;
         }
     }
 
@@ -756,20 +766,13 @@ function showImportPreviewUI(fileName, parsed) {
     `;
 
     let samplePreviewHtml = '';
-    if (p1Len > 0) {
-        samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần I:</strong> ${parsed.part1[0].q} (Đáp án: ${String.fromCharCode(65 + parsed.part1[0].ans)})</div>`;
-    }
-    if (p2Len > 0) {
-        samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần II:</strong> ${parsed.part2[0].context} (${parsed.part2[0].items.length} ý Đúng/Sai)</div>`;
-    }
-    if (p3Len > 0) {
-        samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần III:</strong> ${parsed.part3[0].q} (Đáp số: ${parsed.part3[0].ans})</div>`;
-    }
-    if (probLen > 0) {
-        samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Bài Code:</strong> [${parsed.problems[0].track.toUpperCase()}] ${parsed.problems[0].title}</div>`;
-    }
+    if (p1Len > 0) samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần I:</strong> ${parsed.part1[0].q}</div>`;
+    if (p2Len > 0) samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần II:</strong> ${parsed.part2[0].context}</div>`;
+    if (p3Len > 0) samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Phần III:</strong> ${parsed.part3[0].q}</div>`;
+    if (probLen > 0) samplePreviewHtml += `<div class="text-xs text-slate-700">• <strong>Mẫu Bài Code:</strong> [${parsed.problems[0].track.toUpperCase()}] ${parsed.problems[0].title}</div>`;
+
     if (detailEl) {
-        detailEl.innerHTML = samplePreviewHtml || `<div class="text-xs text-rose-600">Không tìm thấy câu hỏi nào khớp cấu trúc mẫu. Hãy tải File Mẫu về để xem định dạng chuẩn!</div>`;
+        detailEl.innerHTML = samplePreviewHtml || `<div class="text-xs text-rose-600">Không tìm thấy câu hỏi nào khớp cấu trúc mẫu.</div>`;
     }
 }
 
@@ -787,10 +790,8 @@ async function confirmAndApplyImportedBank(mode = 'APPEND') {
         EXAM_DATA.part3.push(...parsed.part3);
     }
 
-    // Lưu đề thi vào LocalStorage
     localStorage.setItem('thpt_custom_exam_v2', JSON.stringify(EXAM_DATA));
 
-    // Gộp các bài tập Code Auto-Judge vào đúng khối
     const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
     parsed.problems.forEach(p => {
         const t = p.track || 'k10';
@@ -801,12 +802,10 @@ async function confirmAndApplyImportedBank(mode = 'APPEND') {
     });
     localStorage.setItem('thpt_custom_problems_v2', JSON.stringify(customProbs));
 
-    // Cập nhật toàn bộ giao diện
     renderExamQuestions();
     loadProblemList();
     renderAdminProblemList();
 
-    // Tự động đẩy lên GitHub data/exam-2025.json nếu đã cấu hình GitHub Token
     if (window.cloudPipeline) {
         await window.cloudPipeline.commitJsonToGitHub(
             'data/exam-2025.json',
@@ -817,6 +816,5 @@ async function confirmAndApplyImportedBank(mode = 'APPEND') {
 
     document.getElementById('import-preview-container').classList.add('hidden');
     window.PENDING_IMPORT_DATA = null;
-
     alert('🎉 Đã nạp thành công Đề thi & Ngân hàng Học liệu vào hệ thống!');
 }

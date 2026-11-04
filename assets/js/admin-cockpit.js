@@ -1,6 +1,7 @@
 /**
- * ThayTruongIT - THPT Hub
- * Admin Cockpit & Multi-Engine Auto-Judge Controller (Python WASM + SQLite WASM + Web DOM Judge)
+ * ThayTruongIT - THPT Hub (OLM.vn Inspired LMS Architecture)
+ * Quản lý Lớp học theo Khối 10/11, Nạp Tài khoản (Họ tên, Lớp, Ngày sinh),
+ * Phân quyền Học sinh theo Lớp/Khối & Bàn làm việc Giáo viên Tách biệt Hoàn toàn
  */
 
 let SQL_ENGINE = null;
@@ -8,7 +9,65 @@ let CURRENT_STUDENT_ID = 'HS1001';
 let FOCUS_LOCK_ACTIVE = false;
 let EXAM_SHUFFLE_CODE = '101';
 
-// --- 1. TỰ ĐỘNG TẢI NGÂN HÀNG ĐỀ THI & HỌC LIỆU TỪ THƯ MỤC data/*.json TRÊN GITHUB ---
+// Danh sách các Lớp học chuẩn theo Khối 10 & Khối 11
+const DEFAULT_CLASSES = [
+    {
+        id: '10A1',
+        name: 'Lớp 10A1',
+        grade: 10,
+        track: 'k10',
+        track_label: 'Khối 10: Lập trình Python cơ bản',
+        academic_year: '2026 - 2027',
+        exam_enabled: true,
+        practice_enabled: true,
+        assigned_problems: ['py10_01', 'py10_02', 'py10_03', 'py10_04'],
+        assigned_exam: true,
+        deadline: '2026-11-15'
+    },
+    {
+        id: '10A2',
+        name: 'Lớp 10A2',
+        grade: 10,
+        track: 'k10',
+        track_label: 'Khối 10: Lập trình Python cơ bản',
+        academic_year: '2026 - 2027',
+        exam_enabled: true,
+        practice_enabled: true,
+        assigned_problems: ['py10_01', 'py10_02'],
+        assigned_exam: true,
+        deadline: '2026-11-15'
+    },
+    {
+        id: '11CS1',
+        name: 'Lớp 11CS1 (Định hướng CS)',
+        grade: 11,
+        track: 'k11-cs',
+        track_label: 'Khối 11: Khoa học máy tính (Thuật toán & SQL)',
+        academic_year: '2026 - 2027',
+        exam_enabled: true,
+        practice_enabled: true,
+        assigned_problems: ['cs11_algo_01', 'cs11_algo_02', 'cs11_sql_01', 'cs11_sql_02'],
+        assigned_exam: true,
+        deadline: '2026-11-20'
+    },
+    {
+        id: '11ICT1',
+        name: 'Lớp 11ICT1 (Định hướng ICT)',
+        grade: 11,
+        track: 'k11-ict',
+        track_label: 'Khối 11: Tin học ứng dụng (Thiết kế Web & CSDL)',
+        academic_year: '2026 - 2027',
+        exam_enabled: true,
+        practice_enabled: true,
+        assigned_problems: ['ict11_web_01', 'ict11_web_02'],
+        assigned_exam: true,
+        deadline: '2026-11-20'
+    }
+];
+
+window.CLASSES_LIST = [];
+
+// --- 1. TẢI DỮ LIỆU HỌC LIỆU, LỚP HỌC VÀ HỌC SINH TỪ GITHUB data/*.json ---
 async function loadGitHubDataFiles() {
     const files = [
         { key: 'k10', path: 'data/grade10-python.json' },
@@ -22,7 +81,6 @@ async function loadGitHubDataFiles() {
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
-                    // Chuẩn hóa trường sample_in / sample_out
                     APP_DATA[item.key] = data.map(p => ({
                         ...p,
                         type: p.type || 'ALGORITHM',
@@ -37,7 +95,7 @@ async function loadGitHubDataFiles() {
         }
     }
 
-    // Hợp nhất các bài tập do Giáo viên thêm mới trong LocalStorage
+    // Hợp nhất các bài tập do Giáo viên thêm mới
     const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
     ['k10', 'k11-cs', 'k11-ict'].forEach(k => {
         if (Array.isArray(customProbs[k]) && customProbs[k].length > 0) {
@@ -50,52 +108,54 @@ async function loadGitHubDataFiles() {
         }
     });
 
-    // Tải danh sách học sinh từ data/students-roster.json hoặc LocalStorage
-    const savedRoster = localStorage.getItem('thpt_roster_v2');
-    if (savedRoster) {
+    // Tải cấu trúc Lớp học (Khối 10 & Khối 11)
+    const savedClasses = localStorage.getItem('thpt_classes_v3');
+    if (savedClasses) {
+        try { window.CLASSES_LIST = JSON.parse(savedClasses); } catch (e) {}
+    }
+    if (!window.CLASSES_LIST || window.CLASSES_LIST.length === 0) {
         try {
-            window.STUDENTS_ROSTER = JSON.parse(savedRoster);
+            const cRes = await fetch(`data/classes-config.json?v=${Date.now()}`);
+            if (cRes.ok) window.CLASSES_LIST = await cRes.json();
         } catch (e) {}
     }
+    if (!window.CLASSES_LIST || window.CLASSES_LIST.length === 0) {
+        window.CLASSES_LIST = JSON.parse(JSON.stringify(DEFAULT_CLASSES));
+    }
+    saveClassesToStorage();
 
+    // Tải danh sách tài khoản Học sinh
+    const savedRoster = localStorage.getItem('thpt_roster_v3');
+    if (savedRoster) {
+        try { window.STUDENTS_ROSTER = JSON.parse(savedRoster); } catch (e) {}
+    }
     if (!window.STUDENTS_ROSTER || window.STUDENTS_ROSTER.length === 0) {
         try {
             const rRes = await fetch(`data/students-roster.json?v=${Date.now()}`);
-            if (rRes.ok) {
-                window.STUDENTS_ROSTER = await rRes.json();
-                saveRosterToStorage();
-            }
+            if (rRes.ok) window.STUDENTS_ROSTER = await rRes.json();
         } catch (e) {}
     }
-
     if (!window.STUDENTS_ROSTER || window.STUDENTS_ROSTER.length === 0) {
         window.STUDENTS_ROSTER = STUDENTS_MOCK.map((s, idx) => ({
             ...s,
+            dob: idx < 2 ? '12/05/2011' : '19/02/2010',
+            grade: idx < 2 ? 10 : 11,
             class_id: idx < 2 ? '10A1' : (idx < 4 ? '11CS1' : '11ICT1'),
             track: idx < 2 ? 'k10' : (idx < 4 ? 'k11-cs' : 'k11-ict'),
             seat: `Máy 0${idx + 1}`,
-            pin: `${idx + 1}${idx + 1}${idx + 1}${idx + 1}`,
+            pin: idx < 2 ? '12052011' : '19022010',
+            permission_status: 'ACTIVE',
+            smart_score: 85,
             xp: 1250 + idx * 150,
             level: 3,
             streak: 5 + idx,
             status: 'AC',
             current_task: 'py10_01',
+            completed_tasks: ['py10_01'],
             tab_warnings: 0
         }));
-        saveRosterToStorage();
     }
-
-    // Kiểm tra URL parameter ?student=HS1001 (Quét mã QR đăng nhập nhanh)
-    const params = new URLSearchParams(window.location.search);
-    const qrStudent = params.get('student');
-    if (qrStudent && window.STUDENTS_ROSTER.some(s => s.id === qrStudent)) {
-        CURRENT_STUDENT_ID = qrStudent;
-    } else {
-        CURRENT_STUDENT_ID = localStorage.getItem('thpt_active_student_id') || window.STUDENTS_ROSTER[0].id;
-    }
-
-    renderActiveStudentSelector();
-    loadProblemList();
+    saveRosterToStorage();
 
     // Khôi phục Đề thi đã nạp từ DOCX/XLSX nếu có
     const savedExam = localStorage.getItem('thpt_custom_exam_v2');
@@ -105,50 +165,344 @@ async function loadGitHubDataFiles() {
             if (parsedExam.part1) EXAM_DATA.part1 = parsedExam.part1;
             if (parsedExam.part2) EXAM_DATA.part2 = parsedExam.part2;
             if (parsedExam.part3) EXAM_DATA.part3 = parsedExam.part3;
-            if (typeof renderExamQuestions === 'function') renderExamQuestions();
         } catch (e) {}
     }
 
     // Khởi chạy hệ thống Đăng nhập & Phân quyền RBAC
     if (typeof initAuthSystem === 'function') {
         initAuthSystem();
-    } else {
-        renderGradebookTable();
-        renderAdminAllViews();
     }
 }
 
+function saveClassesToStorage() {
+    localStorage.setItem('thpt_classes_v3', JSON.stringify(window.CLASSES_LIST));
+}
+
 function saveRosterToStorage() {
-    localStorage.setItem('thpt_roster_v2', JSON.stringify(window.STUDENTS_ROSTER));
+    localStorage.setItem('thpt_roster_v3', JSON.stringify(window.STUDENTS_ROSTER));
+}
+
+function getClassById(classId) {
+    return (window.CLASSES_LIST || []).find(c => c.id.toUpperCase() === String(classId || '').toUpperCase()) || window.CLASSES_LIST[0];
 }
 
 function getActiveStudent() {
     return (window.STUDENTS_ROSTER || []).find(s => s.id === CURRENT_STUDENT_ID) || window.STUDENTS_ROSTER[0];
 }
 
-function renderActiveStudentSelector() {
-    const sel = document.getElementById('active-student-select');
-    if (!sel || !window.STUDENTS_ROSTER) return;
+function normalizeDobToPin(dobStr) {
+    const digits = String(dobStr || '').replace(/\D/g, '');
+    return digits.length >= 4 ? digits : '1111';
+}
 
-    sel.innerHTML = window.STUDENTS_ROSTER.map(s =>
-        `<option value="${s.id}" ${s.id === CURRENT_STUDENT_ID ? 'selected' : ''}>👦 ${s.id} - ${s.name} (${s.class_id})</option>`
-    ).join('');
+// --- 2. QUẢN LÝ LỚP HỌC THEO KHỐI 10, 11 & GIAO BÀI KIỂU OLM.VN ---
+function createNewClassByGrade() {
+    const classCode = (document.getElementById('new-class-code').value || '').trim().toUpperCase();
+    const className = (document.getElementById('new-class-name').value || '').trim();
+    const gradeVal = parseInt(document.getElementById('new-class-grade').value) || 10;
+    const trackVal = document.getElementById('new-class-track').value || (gradeVal === 10 ? 'k10' : 'k11-cs');
 
-    const stu = getActiveStudent();
-    if (stu) {
-        document.getElementById('header-xp').textContent = (stu.xp || 1250).toLocaleString();
-        document.getElementById('header-level').textContent = stu.level || Math.floor((stu.xp || 1250) / 500) + 1;
-        document.getElementById('header-streak').textContent = stu.streak || 5;
+    if (!classCode) {
+        alert('Vui lòng nhập Mã lớp (VD: 10A3, 11CS2, 11ICT2)!');
+        return;
+    }
+
+    if (window.CLASSES_LIST.some(c => c.id.toUpperCase() === classCode)) {
+        alert(`Lớp "${classCode}" đã tồn tại trong hệ thống!`);
+        return;
+    }
+
+    const trackLabels = {
+        'k10': 'Khối 10: Lập trình Python cơ bản',
+        'k11-cs': 'Khối 11: Khoa học máy tính (Thuật toán & SQL)',
+        'k11-ict': 'Khối 11: Tin học ứng dụng (Thiết kế Web & CSDL)'
+    };
+
+    const defaultProblems = (APP_DATA[trackVal] || []).map(p => p.id);
+    const newClassObj = {
+        id: classCode,
+        name: className || `Lớp ${classCode}`,
+        grade: gradeVal,
+        track: trackVal,
+        track_label: trackLabels[trackVal] || trackLabels['k10'],
+        academic_year: '2026 - 2027',
+        exam_enabled: true,
+        practice_enabled: true,
+        assigned_problems: defaultProblems,
+        assigned_exam: true,
+        deadline: '2026-11-30'
+    };
+
+    window.CLASSES_LIST.push(newClassObj);
+    saveClassesToStorage();
+    renderAdminAllViews();
+
+    document.getElementById('new-class-code').value = '';
+    document.getElementById('new-class-name').value = '';
+    alert(`✅ Đã tạo mới thành công "${newClassObj.name}" thuộc Khối ${gradeVal} (${newClassObj.track_label})!`);
+}
+
+function onSelectGradeForNewClass(gradeVal) {
+    const trackSel = document.getElementById('new-class-track');
+    if (!trackSel) return;
+    if (String(gradeVal) === '10') {
+        trackSel.innerHTML = `<option value="k10">Khối 10: Lập trình Python cơ bản</option>`;
+    } else {
+        trackSel.innerHTML = `
+            <option value="k11-cs">Khối 11 - Định hướng Khoa học máy tính (CS)</option>
+            <option value="k11-ict">Khối 11 - Định hướng Tin học ứng dụng (ICT)</option>
+        `;
     }
 }
 
-function onSwitchActiveStudent(studentId) {
-    CURRENT_STUDENT_ID = studentId;
-    localStorage.setItem('thpt_active_student_id', studentId);
-    renderActiveStudentSelector();
+function toggleClassExamPermission(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return;
+    cls.exam_enabled = !cls.exam_enabled;
+    saveClassesToStorage();
+    renderAdminAllViews();
 }
 
-// --- 2. BỘ CHẤM ĐA NGÔN NGỮ: PYTHON WASM + SQLITE WASM + WEB HTML/CSS DOM ---
+function deleteClassById(classId) {
+    const count = (window.STUDENTS_ROSTER || []).filter(s => s.class_id === classId).length;
+    if (count > 0 && !confirm(`Lớp ${classId} đang có ${count} học sinh. Bạn có chắc chắn muốn xóa lớp này không?`)) {
+        return;
+    }
+    window.CLASSES_LIST = window.CLASSES_LIST.filter(c => c.id !== classId);
+    saveClassesToStorage();
+    renderAdminAllViews();
+}
+
+// --- 3. NẠP TÀI KHOẢN HỌC SINH THEO KHỐI (HỌ TÊN, LỚP, NGÀY SINH - CHUẨN OLM.VN) ---
+async function bulkImportStudentsByGradeFromText() {
+    const targetGrade = parseInt(document.getElementById('bulk-import-grade').value) || 10;
+    const rawText = (document.getElementById('bulk-import-textarea').value || '').trim();
+
+    if (!rawText) {
+        alert('Vui lòng nhập hoặc dán danh sách học sinh theo định dạng: Họ và tên | Lớp | Ngày sinh');
+        return;
+    }
+
+    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    let importedCount = 0;
+
+    lines.forEach((line, idx) => {
+        // Hỗ trợ phân tách bằng dấu |, phím Tab (\t), dấu chấm phẩy ; hoặc dấu phẩy ,
+        const parts = line.split(/\||\t|;|,/).map(p => p.trim()).filter(Boolean);
+        if (parts.length < 2) return;
+
+        const fullName = parts[0];
+        const classCode = parts[1].toUpperCase();
+        const dob = parts[2] || (targetGrade === 10 ? '15/05/2011' : '15/05/2010');
+
+        // Kiểm tra bỏ qua dòng tiêu đề nếu có
+        if (fullName.toLowerCase().includes('họ và tên') || fullName.toLowerCase() === 'họ tên') return;
+
+        upsertStudentWithClassAndDob({
+            fullName,
+            classCode,
+            dob,
+            fallbackGrade: targetGrade,
+            seqIndex: idx + 1
+        });
+        importedCount++;
+    });
+
+    saveClassesToStorage();
+    saveRosterToStorage();
+    renderAdminAllViews();
+
+    if (window.cloudPipeline && importedCount > 0) {
+        await window.cloudPipeline.pushEvent('BULK_SYNC_ALL', { students: window.STUDENTS_ROSTER });
+    }
+
+    document.getElementById('bulk-import-textarea').value = '';
+    alert(`🎉 Đã nạp thành công ${importedCount} tài khoản học sinh vào Khối ${targetGrade}!\nMật khẩu mặc định của mỗi học sinh là Ngày sinh viết liền (VD: 15/08/2011 -> 15082011).`);
+}
+
+function upsertStudentWithClassAndDob({ fullName, classCode, dob, fallbackGrade, seqIndex, customId }) {
+    const inferredGrade = classCode.startsWith('11') ? 11 : (classCode.startsWith('10') ? 10 : (fallbackGrade || 10));
+    const inferredTrack = inferredGrade === 10 ? 'k10' : (classCode.toUpperCase().includes('ICT') ? 'k11-ict' : 'k11-cs');
+
+    // Tự động tạo lớp nếu lớp đó chưa có trong danh sách lớp
+    let clsObj = window.CLASSES_LIST.find(c => c.id.toUpperCase() === classCode.toUpperCase());
+    if (!clsObj) {
+        clsObj = {
+            id: classCode.toUpperCase(),
+            name: `Lớp ${classCode.toUpperCase()}`,
+            grade: inferredGrade,
+            track: inferredTrack,
+            track_label: inferredGrade === 10 ? 'Khối 10: Lập trình Python cơ bản' : (inferredTrack === 'k11-ict' ? 'Khối 11: Tin học ứng dụng (ICT)' : 'Khối 11: Khoa học máy tính (CS)'),
+            academic_year: '2026 - 2027',
+            exam_enabled: true,
+            practice_enabled: true,
+            assigned_problems: (APP_DATA[inferredTrack] || []).map(p => p.id),
+            assigned_exam: true,
+            deadline: '2026-11-30'
+        };
+        window.CLASSES_LIST.push(clsObj);
+    }
+
+    // Sinh mã học sinh tự động theo chuẩn Khối + Số thứ tự
+    const stuId = customId || `HS${inferredGrade}${String(window.STUDENTS_ROSTER.length + 1).padStart(2, '0')}`;
+    const pinFromDob = normalizeDobToPin(dob);
+
+    const existing = window.STUDENTS_ROSTER.find(s =>
+        s.id.toUpperCase() === stuId.toUpperCase() ||
+        (s.name.toLowerCase() === fullName.toLowerCase() && s.class_id.toUpperCase() === classCode.toUpperCase())
+    );
+
+    const studentRecord = {
+        id: existing ? existing.id : stuId,
+        name: fullName,
+        dob: dob,
+        grade: clsObj.grade,
+        class_id: clsObj.id,
+        track: clsObj.track,
+        seat: existing ? existing.seat : `Máy ${String((window.STUDENTS_ROSTER.length % 45) + 1).padStart(2, '0')}`,
+        pin: pinFromDob,
+        permission_status: existing ? (existing.permission_status || 'ACTIVE') : 'ACTIVE',
+        smart_score: existing ? (existing.smart_score || 80) : 80,
+        xp: existing ? (existing.xp || 1000) : 1000,
+        level: existing ? (existing.level || 2) : 2,
+        streak: existing ? (existing.streak || 1) : 1,
+        tx1: existing ? existing.tx1 : 8.0,
+        tx2: existing ? existing.tx2 : 8.0,
+        tx3: existing ? existing.tx3 : 8.0,
+        tx4: existing ? existing.tx4 : 8.0,
+        gk: existing ? existing.gk : 8.0,
+        ck: existing ? existing.ck : 8.0,
+        status: existing ? existing.status : 'WORKING',
+        current_task: (APP_DATA[clsObj.track] && APP_DATA[clsObj.track][0]) ? APP_DATA[clsObj.track][0].id : 'py10_01',
+        completed_tasks: existing ? (existing.completed_tasks || []) : [],
+        tab_warnings: 0
+    };
+
+    if (existing) {
+        Object.assign(existing, studentRecord);
+    } else {
+        window.STUDENTS_ROSTER.push(studentRecord);
+    }
+    return studentRecord;
+}
+
+function downloadStudentImportTemplateXlsx() {
+    const sampleRows = [
+        { "Họ và tên": "Nguyễn Văn Minh", "Lớp": "10A1", "Ngày sinh": "15/08/2011", "Khối": 10 },
+        { "Họ và tên": "Trần Ngọc Lan", "Lớp": "10A2", "Ngày sinh": "22/10/2011", "Khối": 10 },
+        { "Họ và tên": "Lê Hoàng Nam", "Lớp": "11CS1", "Ngày sinh": "05/03/2010", "Khối": 11 },
+        { "Họ và tên": "Phạm Phương Thảo", "Lớp": "11ICT1", "Ngày sinh": "18/11/2010", "Khối": 11 }
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "DS_HocSinh_TheoKhoi");
+    XLSX.writeFile(wb, "Mau_Nap_TaiKhoan_HocSinh_Khối_10_11.xlsx");
+}
+
+function importRosterFromExcelFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const targetGrade = parseInt(document.getElementById('bulk-import-grade')?.value) || 10;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        let added = 0;
+        rows.forEach((r, idx) => {
+            const fullName = String(r['Họ và tên'] || r['Họ và Tên'] || r['Họ tên'] || r['HoTen'] || r['Name'] || '').trim();
+            const classCode = String(r['Lớp'] || r['Lop'] || r['Class'] || (targetGrade === 10 ? '10A1' : '11CS1')).trim().toUpperCase();
+            const dob = String(r['Ngày sinh'] || r['NgaySinh'] || r['DOB'] || (targetGrade === 10 ? '15/05/2011' : '15/05/2010')).trim();
+            const customId = r['Mã Học Sinh'] || r['MaHS'] ? String(r['Mã Học Sinh'] || r['MaHS']).trim() : null;
+
+            if (fullName) {
+                upsertStudentWithClassAndDob({
+                    fullName,
+                    classCode,
+                    dob,
+                    fallbackGrade: Number(r['Khối'] || targetGrade),
+                    seqIndex: idx + 1,
+                    customId
+                });
+                added++;
+            }
+        });
+
+        saveClassesToStorage();
+        saveRosterToStorage();
+        renderAdminAllViews();
+
+        if (window.cloudPipeline && added > 0) {
+            await window.cloudPipeline.pushEvent('BULK_SYNC_ALL', { students: window.STUDENTS_ROSTER });
+        }
+        alert(`🎉 Đã nạp thành công ${added} tài khoản học sinh từ file Excel (Họ tên, Lớp, Ngày sinh) và đồng bộ lên Google Sheets!`);
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function exportStudentCredentialsExcel() {
+    const filterGrade = document.getElementById('roster-filter-grade')?.value || 'ALL';
+    const filterClass = document.getElementById('roster-filter-class')?.value || 'ALL';
+
+    const list = (window.STUDENTS_ROSTER || []).filter(s => {
+        const matchGrade = filterGrade === 'ALL' || String(s.grade) === String(filterGrade);
+        const matchClass = filterClass === 'ALL' || s.class_id === filterClass;
+        return matchGrade && matchClass;
+    });
+
+    const rows = list.map((s, idx) => ({
+        "STT": idx + 1,
+        "Mã Đăng Nhập (Tài khoản)": s.id,
+        "Họ và Tên Học Sinh": s.name,
+        "Ngày Sinh": s.dob || "15/05/2011",
+        "Khối": s.grade || 10,
+        "Lớp": s.class_id,
+        "Chương Trình Được Phân Quyền": s.track === 'k10' ? 'Tin học 10 (Python)' : (s.track === 'k11-cs' ? 'Tin học 11 (Khoa học máy tính - CS)' : 'Tin học 11 (Tin học ứng dụng - ICT)'),
+        "Mật Khẩu Mặc Định (Ngày sinh)": s.pin || normalizeDobToPin(s.dob),
+        "Trạng Thái Quyền": s.permission_status === 'LOCKED' ? 'Tạm khóa' : 'Đang mở'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TaiKhoan_HocSinh");
+    XLSX.writeFile(wb, "DanhSach_TaiKhoan_HocSinh_OLM_THPT.xlsx");
+}
+
+// --- 4. THAY ĐỔI QUYỀN HỌC SINH THEO LỚP, KHỐI TRỰC TIẾP ---
+async function onChangeStudentClassOrGrade(studentId, newClassId) {
+    const stu = (window.STUDENTS_ROSTER || []).find(s => s.id === studentId);
+    const clsObj = getClassById(newClassId);
+    if (!stu || !clsObj) return;
+
+    stu.class_id = clsObj.id;
+    stu.grade = clsObj.grade;
+    stu.track = clsObj.track;
+
+    saveRosterToStorage();
+    renderAdminAllViews();
+
+    if (window.cloudPipeline) {
+        await window.cloudPipeline.pushEvent('UPSERT_STUDENT', stu);
+    }
+}
+
+async function onChangeStudentPermissionStatus(studentId) {
+    const stu = (window.STUDENTS_ROSTER || []).find(s => s.id === studentId);
+    if (!stu) return;
+
+    stu.permission_status = stu.permission_status === 'LOCKED' ? 'ACTIVE' : 'LOCKED';
+    saveRosterToStorage();
+    renderAdminAllViews();
+
+    if (window.cloudPipeline) {
+        await window.cloudPipeline.pushEvent('UPSERT_STUDENT', stu);
+    }
+}
+
+// --- 5. BỘ CHẤM CODE ĐA NGÔN NGỮ: PYTHON WASM + SQLITE WASM + WEB HTML/CSS DOM ---
 async function initSqlEngine() {
     if (SQL_ENGINE) return SQL_ENGINE;
     if (typeof window.initSqlJs === 'function') {
@@ -172,13 +526,8 @@ async function executeSqlProblem(prob, studentQuery) {
 
     const db = new SQL.Database();
     try {
-        // 1. Khởi tạo bảng & dữ liệu mẫu
         db.run(prob.sql_init || '');
-
-        // 2. Chạy truy vấn của học sinh
         const stuRes = db.exec(studentQuery);
-
-        // 3. Chạy truy vấn đáp án chuẩn của giáo viên
         const expRes = db.exec(prob.expected_query || '');
 
         const stuTable = stuRes[0] || { columns: [], values: [] };
@@ -219,18 +568,26 @@ function executeWebProblem(prob, htmlCode) {
     };
 }
 
-// --- 3. TỰ ĐỘNG GHI ĐIỂM & ĐỒNG BỘ LÊN GOOGLE SHEETS KHI HỌC SINH NỘP BÀI ---
+// --- 6. GHI NHẬN KẾT QUẢ BÀI LÀM CỦA HỌC SINH & TÍNH ĐIỂM SMARTSCORE OLM ---
 async function recordAndSyncStudentSubmission({ problemId, problemTitle, submissionType, verdict, score, xpAdded }) {
     const stu = getActiveStudent();
     if (!stu) return;
 
-    // Cập nhật XP, Level, Trạng thái
     stu.xp = (stu.xp || 1000) + (xpAdded || 0);
     stu.level = Math.floor(stu.xp / 500) + 1;
     stu.status = verdict === 'AC' ? 'AC' : 'ERROR';
     stu.current_task = problemId;
 
-    // Tự động cập nhật cột điểm tương ứng trong Sổ điểm Thông tư 22
+    if (!Array.isArray(stu.completed_tasks)) stu.completed_tasks = [];
+    if (verdict === 'AC' && !stu.completed_tasks.includes(problemId)) {
+        stu.completed_tasks.push(problemId);
+    }
+
+    // Cập nhật chỉ số SmartScore kiểu OLM.vn (0 -> 100)
+    if (verdict === 'AC') {
+        stu.smart_score = Math.min(100, (stu.smart_score || 75) + 5);
+    }
+
     if (submissionType === 'AUTO_JUDGE') {
         stu.tx3 = Math.max(Number(stu.tx3 || 0), Number(score.toFixed(1)));
     } else if (submissionType === 'EXAM_2025') {
@@ -239,11 +596,12 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
     }
 
     saveRosterToStorage();
-    renderActiveStudentSelector();
+    if (typeof renderStudentPortalHeaderAndTasks === 'function') {
+        renderStudentPortalHeaderAndTasks();
+    }
     renderGradebookTable();
     renderAdminAllViews();
 
-    // Đẩy tự động lên Google Sheets qua CloudPipeline
     if (window.cloudPipeline) {
         await window.cloudPipeline.pushEvent('RECORD_SUBMISSION', {
             studentId: stu.id,
@@ -260,14 +618,13 @@ async function recordAndSyncStudentSubmission({ problemId, problemTitle, submiss
     }
 }
 
-// --- 4. GIÁM SÁT CHỐNG GIAN LẬN (CHUYỂN TAB / COPY-PASTE) ---
+// --- 7. GIÁM SÁT CHỐNG GIAN LẬN (CHỈ ÁP DỤNG KHI ĐĂNG NHẬP LÀ HỌC SINH) ---
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
+    if (document.hidden && window.CURRENT_SESSION && window.CURRENT_SESSION.role === 'STUDENT') {
         const stu = getActiveStudent();
         if (stu) {
             stu.tab_warnings = (stu.tab_warnings || 0) + 1;
             saveRosterToStorage();
-            renderAdminAllViews();
             if (window.cloudPipeline) {
                 window.cloudPipeline.pushEvent('LAB_HEARTBEAT', stu);
             }
@@ -275,11 +632,11 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// --- 5. ĐIỀU KHIỂN CÁC SUB-TAB TRONG TRUNG TÂM QUẢN TRỊ (ADMIN COCKPIT) ---
+// --- 8. ĐIỀU KHIỂN BÀN LÀM VIỆC GIÁO VIÊN (OLM TEACHER PORTAL) ---
 function switchAdminSubTab(subId) {
     document.querySelectorAll('.admin-subpanel').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.admin-subbtn').forEach(btn => {
-        btn.className = 'admin-subbtn px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 transition-all';
+        btn.className = 'admin-subbtn px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2 transition-all';
     });
 
     const target = document.getElementById(`admin-panel-${subId}`);
@@ -287,120 +644,108 @@ function switchAdminSubTab(subId) {
 
     const activeBtn = document.getElementById(`admin-btn-${subId}`);
     if (activeBtn) {
-        activeBtn.className = 'admin-subbtn px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 transition-all';
+        activeBtn.className = 'admin-subbtn px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md flex items-center gap-2 transition-all';
     }
     lucide.createIcons();
 }
 
 function renderAdminAllViews() {
-    renderLabHeatmap45();
+    renderClassesManagerCards();
+    populateClassFilterDropdowns();
     renderAdminRosterTable();
+    renderLabHeatmap45();
     renderAdminProblemList();
     renderAdminGradebookEditor();
     renderSyncLogsUI();
     loadCloudConfigIntoForm();
 }
 
-// 5.1. Sơ đồ Phòng máy 45 máy Realtime
-function renderLabHeatmap45() {
-    const grid = document.getElementById('lab-heatmap-grid');
-    if (!grid) return;
+function renderClassesManagerCards() {
+    const container = document.getElementById('classes-manager-grid');
+    if (!container) return;
 
-    const roster = window.STUDENTS_ROSTER || [];
-    let html = '';
-
-    for (let i = 1; i <= 24; i++) {
-        const seatLabel = `Máy ${i < 10 ? '0' + i : i}`;
-        const stu = roster[i - 1];
-
-        if (stu) {
-            let colorClass = 'bg-emerald-50 border-emerald-300 text-emerald-900';
-            let statusBadge = '🟢 AC (100đ)';
-            if (stu.tab_warnings > 0) {
-                colorClass = 'bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-300';
-                statusBadge = `⚠️ Chuyển Tab (${stu.tab_warnings})`;
-            } else if (stu.status === 'ERROR') {
-                colorClass = 'bg-rose-50 border-rose-300 text-rose-900';
-                statusBadge = '🔴 Lỗi Code / TLE';
-            } else if (stu.status === 'WORKING') {
-                colorClass = 'bg-blue-50 border-blue-300 text-blue-900';
-                statusBadge = '🟡 Đang gõ code';
-            }
-
-            html += `
-                <div class="p-2.5 rounded-xl border ${colorClass} text-xs flex flex-col justify-between shadow-sm">
-                    <div class="flex justify-between items-center font-bold">
-                        <span>🖥️ ${seatLabel}</span>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/80">${stu.class_id}</span>
+    container.innerHTML = (window.CLASSES_LIST || []).map(cls => {
+        const stuCount = (window.STUDENTS_ROSTER || []).filter(s => s.class_id === cls.id).length;
+        const badgeColor = cls.grade === 10 ? 'bg-indigo-100 text-indigo-800' : (cls.track === 'k11-cs' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800');
+        return `
+            <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start gap-2">
+                        <span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${badgeColor}">Khối ${cls.grade}</span>
+                        <span class="text-xs font-bold text-slate-500">👨‍🎓 ${stuCount} học sinh</span>
                     </div>
-                    <div class="font-bold truncate mt-1" title="${stu.name}">${stu.name}</div>
-                    <div class="text-[11px] opacity-80 mt-0.5 flex justify-between items-center">
-                        <span>${statusBadge}</span>
-                        <span class="font-mono font-bold">${stu.tx3 || 0}đ</span>
-                    </div>
+                    <h4 class="text-base font-black text-slate-900 mt-2">${cls.name} (${cls.id})</h4>
+                    <p class="text-xs text-slate-600 mt-0.5">${cls.track_label}</p>
                 </div>
-            `;
-        } else {
-            html += `
-                <div class="p-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs flex flex-col justify-between">
-                    <div class="font-bold">🖥️ ${seatLabel}</div>
-                    <div class="text-[11px] italic my-1">Máy trống</div>
-                    <div class="text-[10px]">⚪ Offline</div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2 text-xs">
+                    <button onclick="toggleClassExamPermission('${cls.id}')" class="px-2.5 py-1 rounded-lg font-bold ${cls.exam_enabled ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                        ${cls.exam_enabled ? '🟢 Đang mở quyền Học & Thi' : '🔒 Đã khóa bài thi'}
+                    </button>
+                    <button onclick="deleteClassById('${cls.id}')" class="text-slate-400 hover:text-rose-600 text-[11px]">Xóa lớp</button>
                 </div>
-            `;
+            </div>
+        `;
+    }).join('');
+}
+
+function populateClassFilterDropdowns() {
+    const classOptionsHtml = `<option value="ALL">Tất cả các lớp</option>` +
+        (window.CLASSES_LIST || []).map(c => `<option value="${c.id}">${c.id} - Khối ${c.grade}</option>`).join('');
+
+    ['roster-filter-class', 'gradebook-filter-class', 'lab-filter-class'].forEach(selId => {
+        const el = document.getElementById(selId);
+        if (el) {
+            const currentVal = el.value || 'ALL';
+            el.innerHTML = classOptionsHtml;
+            if ([...el.options].some(o => o.value === currentVal)) el.value = currentVal;
         }
-    }
-    grid.innerHTML = html;
-}
+    });
 
-function toggleFocusLockMode() {
-    FOCUS_LOCK_ACTIVE = !FOCUS_LOCK_ACTIVE;
-    const btn = document.getElementById('btn-focus-lock');
-    const overlay = document.getElementById('student-focus-lock-overlay');
-    if (FOCUS_LOCK_ACTIVE) {
-        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-rose-600 text-white shadow flex items-center gap-1.5';
-        btn.innerHTML = `<i data-lucide="unlock" class="w-4 h-4"></i> Mở Khóa Màn Hình HS (Đang Khóa)`;
-    } else {
-        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow flex items-center gap-1.5';
-        btn.innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Khóa Tập Trung (Focus Mode)`;
-        if (overlay) overlay.classList.add('hidden');
-    }
-    lucide.createIcons();
-}
-
-function previewStudentFocusLock() {
-    const overlay = document.getElementById('student-focus-lock-overlay');
-    if (overlay) overlay.classList.remove('hidden');
-}
-
-function broadcastTeacherHint() {
-    const msg = prompt('Nhập thông báo hoặc gợi ý chung gửi tới toàn bộ màn hình học sinh trong phòng máy:', 'Các em chú ý kiểm tra điều kiện dừng của vòng lặp while nhé!');
-    if (!msg) return;
-    const banner = document.getElementById('live-broadcast-banner');
-    const textEl = document.getElementById('live-broadcast-text');
-    if (banner && textEl) {
-        textEl.textContent = msg;
-        banner.classList.remove('hidden');
+    const newStuClassSel = document.getElementById('new-stu-class');
+    if (newStuClassSel) {
+        newStuClassSel.innerHTML = (window.CLASSES_LIST || []).map(c =>
+            `<option value="${c.id}">${c.id} (${c.track_label})</option>`
+        ).join('');
     }
 }
 
-// 5.2. Quản lý Danh sách Lớp & Học sinh (Roster + Nhập Excel + QR)
 function renderAdminRosterTable() {
     const tbody = document.getElementById('admin-roster-tbody');
     if (!tbody) return;
 
-    const filterClass = (document.getElementById('roster-filter-class')?.value) || 'ALL';
-    const list = (window.STUDENTS_ROSTER || []).filter(s => filterClass === 'ALL' || s.class_id === filterClass);
+    const filterGrade = document.getElementById('roster-filter-grade')?.value || 'ALL';
+    const filterClass = document.getElementById('roster-filter-class')?.value || 'ALL';
+
+    const list = (window.STUDENTS_ROSTER || []).filter(s => {
+        const matchGrade = filterGrade === 'ALL' || String(s.grade) === String(filterGrade);
+        const matchClass = filterClass === 'ALL' || s.class_id === filterClass;
+        return matchGrade && matchClass;
+    });
 
     tbody.innerHTML = list.map((s, idx) => {
-        const qrUrl = `${window.location.origin}${window.location.pathname}?student=${s.id}`;
+        const qrUrl = `${window.location.origin}${window.location.pathname}?student=${s.id}&pin=${s.pin || '1111'}`;
+        const classSelectHtml = (window.CLASSES_LIST || []).map(c =>
+            `<option value="${c.id}" ${c.id === s.class_id ? 'selected' : ''}>${c.id} (Khối ${c.grade} - ${c.track.toUpperCase()})</option>`
+        ).join('');
+
+        const isLocked = s.permission_status === 'LOCKED';
+
         return `
             <tr class="hover:bg-slate-50">
                 <td class="px-3 py-2 font-mono font-bold text-indigo-700">${s.id}</td>
                 <td class="px-3 py-2 font-semibold text-slate-900">${s.name}</td>
-                <td class="px-3 py-2"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">${s.class_id}</span></td>
-                <td class="px-3 py-2">${s.seat || `Máy ${idx + 1}`}</td>
-                <td class="px-3 py-2 font-bold text-amber-700">🏆 ${s.xp || 0} XP</td>
+                <td class="px-3 py-2 font-mono text-slate-600">${s.dob || '15/05/2011'}</td>
+                <td class="px-3 py-2 font-mono text-slate-500">${s.pin || '1111'}</td>
+                <td class="px-3 py-2">
+                    <select onchange="onChangeStudentClassOrGrade('${s.id}', this.value)" class="text-xs border border-slate-300 rounded-lg px-2 py-1 font-bold bg-white text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                        ${classSelectHtml}
+                    </select>
+                </td>
+                <td class="px-3 py-2 text-center">
+                    <button onclick="onChangeStudentPermissionStatus('${s.id}')" class="px-2.5 py-1 rounded-full text-[11px] font-bold ${isLocked ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                        ${isLocked ? '🔒 Đã khóa quyền' : '🟢 Đang mở quyền'}
+                    </button>
+                </td>
                 <td class="px-3 py-2 text-center">
                     <button onclick="copyStudentQrLink('${qrUrl}', '${s.name}')" class="text-xs text-indigo-600 hover:underline font-semibold">🔗 Link QR</button>
                 </td>
@@ -413,43 +758,40 @@ function renderAdminRosterTable() {
 }
 
 function addNewStudentFromAdmin() {
-    const id = document.getElementById('new-stu-id').value.trim();
     const name = document.getElementById('new-stu-name').value.trim();
-    const classId = document.getElementById('new-stu-class').value;
-    const seat = document.getElementById('new-stu-seat').value.trim() || `Máy ${(window.STUDENTS_ROSTER.length + 1)}`;
+    const classCode = document.getElementById('new-stu-class').value;
+    const dob = document.getElementById('new-stu-dob').value.trim() || '15/05/2011';
+    const customId = document.getElementById('new-stu-id').value.trim();
 
-    if (!id || !name) {
-        alert('Vui lòng nhập đầy đủ Mã học sinh và Họ tên!');
+    if (!name) {
+        alert('Vui lòng nhập Họ và tên học sinh!');
         return;
     }
 
-    const track = classId.includes('10') ? 'k10' : (classId.includes('CS') ? 'k11-cs' : 'k11-ict');
-    const newStu = {
-        id, name, class_id: classId, track, seat, pin: '1111',
-        xp: 1000, level: 2, streak: 1,
-        tx1: 8.0, tx2: 8.0, tx3: 8.0, tx4: 8.0, gk: 8.0, ck: 8.0,
-        status: 'WORKING', current_task: 'py10_01', tab_warnings: 0
-    };
+    const stu = upsertStudentWithClassAndDob({
+        fullName: name,
+        classCode,
+        dob,
+        fallbackGrade: classCode.startsWith('11') ? 11 : 10,
+        customId: customId || null
+    });
 
-    window.STUDENTS_ROSTER.push(newStu);
+    saveClassesToStorage();
     saveRosterToStorage();
-    renderActiveStudentSelector();
-    renderGradebookTable();
     renderAdminAllViews();
 
     if (window.cloudPipeline) {
-        window.cloudPipeline.pushEvent('UPSERT_STUDENT', newStu);
+        window.cloudPipeline.pushEvent('UPSERT_STUDENT', stu);
     }
 
     document.getElementById('new-stu-id').value = '';
     document.getElementById('new-stu-name').value = '';
+    alert(`✅ Đã thêm học sinh ${stu.name} (${stu.id}) vào lớp ${stu.class_id}!\nMật khẩu đăng nhập: ${stu.pin}`);
 }
 
 function deleteStudentRoster(stuId) {
     window.STUDENTS_ROSTER = (window.STUDENTS_ROSTER || []).filter(s => s.id !== stuId);
     saveRosterToStorage();
-    renderActiveStudentSelector();
-    renderGradebookTable();
     renderAdminAllViews();
 }
 
@@ -458,62 +800,90 @@ function copyStudentQrLink(url, name) {
     alert(`Đã sao chép đường dẫn đăng nhập nhanh của học sinh ${name}:\n${url}`);
 }
 
-function importRosterFromExcelFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+// 8.2. Sơ đồ Phòng máy Realtime (Lọc theo Lớp)
+function renderLabHeatmap45() {
+    const grid = document.getElementById('lab-heatmap-grid');
+    if (!grid) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet);
+    const filterClass = document.getElementById('lab-filter-class')?.value || 'ALL';
+    const roster = (window.STUDENTS_ROSTER || []).filter(s => filterClass === 'ALL' || s.class_id === filterClass);
+    let html = '';
 
-        let added = 0;
-        rows.forEach((r, idx) => {
-            const id = String(r['Mã Học Sinh'] || r['MaHS'] || r['ID'] || `HS${1200 + idx}`).trim();
-            const name = String(r['Họ và Tên'] || r['HoTen'] || r['Name'] || '').trim();
-            const classId = String(r['Lớp'] || r['Lop'] || '10A1').trim();
-            if (name) {
-                const existing = window.STUDENTS_ROSTER.find(s => s.id === id);
-                const stuObj = {
-                    id, name, class_id: classId,
-                    track: classId.includes('10') ? 'k10' : (classId.includes('CS') ? 'k11-cs' : 'k11-ict'),
-                    seat: `Máy ${window.STUDENTS_ROSTER.length + 1}`,
-                    pin: '1111',
-                    xp: Number(r['XP'] || 1000),
-                    level: 3, streak: 5,
-                    tx1: Number(r['ĐĐGtx 1'] || r['TX1'] || 8.0),
-                    tx2: Number(r['ĐĐGtx 2'] || r['TX2'] || 8.0),
-                    tx3: Number(r['ĐĐGtx 3'] || r['TX3'] || 8.0),
-                    tx4: Number(r['ĐĐGtx 4'] || r['TX4'] || 8.0),
-                    gk: Number(r['ĐĐGgk (x2)'] || r['GK'] || 8.0),
-                    ck: Number(r['ĐĐGck (x3)'] || r['CK'] || 8.0),
-                    status: 'AC', current_task: 'py10_01', tab_warnings: 0
-                };
-                if (existing) {
-                    Object.assign(existing, stuObj);
-                } else {
-                    window.STUDENTS_ROSTER.push(stuObj);
-                }
-                added++;
+    const totalSeats = Math.max(18, roster.length);
+    for (let i = 1; i <= totalSeats; i++) {
+        const seatLabel = `Máy ${i < 10 ? '0' + i : i}`;
+        const stu = roster[i - 1];
+
+        if (stu) {
+            let colorClass = 'bg-emerald-50 border-emerald-300 text-emerald-900';
+            let statusBadge = '🟢 Hoàn thành AC';
+            if (stu.tab_warnings > 0) {
+                colorClass = 'bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-300';
+                statusBadge = `⚠️ Rời Tab (${stu.tab_warnings} lần)`;
+            } else if (stu.status === 'ERROR') {
+                colorClass = 'bg-rose-50 border-rose-300 text-rose-900';
+                statusBadge = '🔴 Gặp lỗi Code';
+            } else if (stu.status === 'WORKING') {
+                colorClass = 'bg-blue-50 border-blue-300 text-blue-900';
+                statusBadge = '🟡 Đang làm bài';
             }
-        });
 
-        saveRosterToStorage();
-        renderActiveStudentSelector();
-        renderGradebookTable();
-        renderAdminAllViews();
-
-        if (window.cloudPipeline) {
-            await window.cloudPipeline.pushEvent('BULK_SYNC_ALL', { students: window.STUDENTS_ROSTER });
+            html += `
+                <div class="p-3 rounded-xl border ${colorClass} text-xs flex flex-col justify-between shadow-sm">
+                    <div class="flex justify-between items-center font-bold">
+                        <span>🖥️ ${seatLabel}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/80 font-extrabold">${stu.class_id}</span>
+                    </div>
+                    <div class="font-bold truncate mt-1.5" title="${stu.name}">${stu.name}</div>
+                    <div class="text-[11px] opacity-85 mt-1 flex justify-between items-center">
+                        <span>${statusBadge}</span>
+                        <span class="font-mono font-bold">${stu.tx3 || 0}đ</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="p-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-400 text-xs flex flex-col justify-between">
+                    <div class="font-bold">🖥️ ${seatLabel}</div>
+                    <div class="text-[11px] italic my-1.5">Máy trống</div>
+                    <div class="text-[10px]">⚪ Chưa đăng nhập</div>
+                </div>
+            `;
         }
-        alert(`Đã nhập thành công ${added} học sinh từ file Excel và tự động đồng bộ lên Google Sheets!`);
-    };
-    reader.readAsArrayBuffer(file);
+    }
+    grid.innerHTML = html;
 }
 
-// 5.3. Quản trị Ngân hàng Đề thi & Học liệu (data/*.json trên GitHub)
+function toggleFocusLockMode() {
+    FOCUS_LOCK_ACTIVE = !FOCUS_LOCK_ACTIVE;
+    const btn = document.getElementById('btn-focus-lock');
+    if (FOCUS_LOCK_ACTIVE) {
+        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-rose-600 text-white shadow flex items-center gap-1.5';
+        btn.innerHTML = `<i data-lucide="unlock" class="w-4 h-4"></i> Mở Khóa Màn Hình HS (Đang Khóa)`;
+    } else {
+        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white shadow flex items-center gap-1.5';
+        btn.innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Khóa Tập Trung (Focus Mode)`;
+    }
+    lucide.createIcons();
+}
+
+function previewStudentFocusLock() {
+    const overlay = document.getElementById('student-focus-lock-overlay');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function broadcastTeacherHint() {
+    const msg = prompt('Nhập thông báo hoặc gợi ý chung gửi tới toàn bộ màn hình học sinh:', 'Các em chú ý đọc kỹ yêu cầu đầu vào/đầu ra và kiểm tra thời gian làm bài nhé!');
+    if (!msg) return;
+    const banner = document.getElementById('live-broadcast-banner');
+    const textEl = document.getElementById('live-broadcast-text');
+    if (banner && textEl) {
+        textEl.textContent = msg;
+        banner.classList.remove('hidden');
+    }
+}
+
+// 8.3. Quản trị Ngân hàng Học liệu & Đề thi (data/*.json trên GitHub)
 function renderAdminProblemList() {
     const tbody = document.getElementById('admin-problems-tbody');
     if (!tbody) return;
@@ -550,7 +920,7 @@ async function addNewProblemAndSyncGitHub() {
     const hint = document.getElementById('adm-prob-hint').value.trim();
 
     if (!title || !desc) {
-        alert('Vui lòng nhập Tiêu đề bài tập và Nội dung đề bài!');
+        alert('Vui lòng nhập Tên bài tập và Mô tả đề bài!');
         return;
     }
 
@@ -566,16 +936,13 @@ async function addNewProblemAndSyncGitHub() {
         sample_in: sampleIn,
         sample_out: sampleOut,
         starter_code: starter || '# Viết code của bạn tại đây\n',
-        testcases: [
-            { input: sampleIn, output: sampleOut, hidden: false }
-        ],
+        testcases: [{ input: sampleIn, output: sampleOut, hidden: false }],
         required_tags: ['header', 'main', 'footer'],
         hint: hint || 'Hãy phân tích kỹ đầu vào và đầu ra mẫu.'
     };
 
     APP_DATA[track].push(newProb);
 
-    // Lưu vào LocalStorage
     const customProbs = JSON.parse(localStorage.getItem('thpt_custom_problems_v2') || '{}');
     if (!customProbs[track]) customProbs[track] = [];
     customProbs[track].push(newProb);
@@ -584,20 +951,18 @@ async function addNewProblemAndSyncGitHub() {
     loadProblemList();
     renderAdminProblemList();
 
-    // Đẩy tự động lên GitHub data/*.json
     const fileMap = {
         'k10': 'data/grade10-python.json',
         'k11-cs': 'data/grade11-cs.json',
         'k11-ict': 'data/grade11-ict.json'
     };
-    const targetPath = fileMap[track];
     const res = await window.cloudPipeline.commitJsonToGitHub(
-        targetPath,
+        fileMap[track],
         APP_DATA[track],
         `Them bai tap moi: ${title} (${newProb.id})`
     );
 
-    alert(`Đã thêm bài tập "${title}" vào kho học liệu!\nTrạng thái GitHub: ${res.message}`);
+    alert(`Đã thêm bài tập "${title}" vào kho học liệu!\n${res.message}`);
 }
 
 function downloadCurriculumJsonFile(trackKey) {
@@ -622,18 +987,25 @@ function shuffleExamPaperCode(code) {
     const badge = document.getElementById('exam-code-badge');
     if (badge) badge.textContent = `Mã đề: ${code}`;
 
-    // Xáo trộn thứ tự câu hỏi Phần I và Phần II
     EXAM_DATA.part1 = [...EXAM_DATA.part1].sort(() => Math.random() - 0.5);
     EXAM_DATA.part2 = [...EXAM_DATA.part2].sort(() => Math.random() - 0.5);
     renderExamQuestions();
 }
 
-// 5.4. Sổ điểm Thông tư 22 Cho phép Chỉnh sửa Trực tiếp (Inline Edit + Auto Sync Google Sheets)
+// 8.4. Sổ điểm Thông tư 22 Cho phép Lọc theo Khối/Lớp & Sửa trực tiếp
 function renderAdminGradebookEditor() {
     const tbody = document.getElementById('admin-gradebook-editor-tbody');
     if (!tbody) return;
 
-    const list = window.STUDENTS_ROSTER || [];
+    const filterGrade = document.getElementById('gradebook-filter-grade')?.value || 'ALL';
+    const filterClass = document.getElementById('gradebook-filter-class')?.value || 'ALL';
+
+    const list = (window.STUDENTS_ROSTER || []).filter(s => {
+        const matchGrade = filterGrade === 'ALL' || String(s.grade) === String(filterGrade);
+        const matchClass = filterClass === 'ALL' || s.class_id === filterClass;
+        return matchGrade && matchClass;
+    });
+
     tbody.innerHTML = list.map(s => {
         const dtb = ((Number(s.tx1) + Number(s.tx2) + Number(s.tx3) + Number(s.tx4) + Number(s.gk) * 2 + Number(s.ck) * 3) / 9).toFixed(1);
         const rank = dtb >= 8.0 ? 'Tốt' : (dtb >= 6.5 ? 'Khá' : (dtb >= 5.0 ? 'Đạt' : 'Chưa đạt'));
@@ -643,7 +1015,8 @@ function renderAdminGradebookEditor() {
             <tr class="hover:bg-slate-50">
                 <td class="px-3 py-2 font-mono font-bold text-slate-600">${s.id}</td>
                 <td class="px-3 py-2 font-semibold text-slate-900">${s.name}</td>
-                <td class="px-2 py-2 text-center"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold">${s.class_id}</span></td>
+                <td class="px-2 py-2 text-center font-mono text-slate-500">${s.dob || ''}</td>
+                <td class="px-2 py-2 text-center"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">${s.class_id}</span></td>
                 ${['tx1', 'tx2', 'tx3', 'tx4', 'gk', 'ck'].map(col => `
                     <td class="px-1.5 py-1.5 text-center">
                         <input type="number" step="0.5" min="0" max="10" value="${s[col]}"
@@ -670,7 +1043,6 @@ async function onTeacherEditScore(studentId, colName, newVal) {
     renderGradebookTable();
     renderAdminGradebookEditor();
 
-    // Tự động đẩy điểm vừa sửa lên Google Sheets ngay lập tức
     if (window.cloudPipeline) {
         await window.cloudPipeline.pushEvent('UPDATE_GRADEBOOK', {
             ...stu,
@@ -679,7 +1051,7 @@ async function onTeacherEditScore(studentId, colName, newVal) {
     }
 }
 
-// 5.5. Trung tâm Đồng bộ Tự động Google Sheets & GitHub
+// 8.5. Trung tâm Đồng bộ Tự động Google Sheets & GitHub
 function loadCloudConfigIntoForm() {
     if (!window.cloudPipeline) return;
     const cfg = window.cloudPipeline.config;
@@ -704,12 +1076,10 @@ async function saveAndAutoInitGoogleSheets() {
         githubToken
     });
 
-    // Tự động đẩy cấu trúc 4 Sheet + Toàn bộ danh sách học sinh & Sổ điểm TT22 lên Google Sheets
     await window.cloudPipeline.pushEvent('AUTO_INIT_SCHEMA', {
         students: window.STUDENTS_ROSTER
     });
 
-    // Nếu người dùng dán link Google Sheets công khai, tự động đọc thử dữ liệu từ Sheet về
     if (window.cloudPipeline.config.spreadsheetId) {
         const rows = await window.cloudPipeline.fetchSheetTabViaGViz('TaiKhoan_HS');
         if (rows && rows.length > 0) {
