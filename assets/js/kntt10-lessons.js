@@ -346,9 +346,9 @@ const KNTT10_LESSONS_DEFAULT = [
         knowledge: `
             <h4>1. Các phép toán ghép đối tượng hình học (Path Operations)</h4>
             <ul class="list-disc pl-5 space-y-1">
-                <li><strong>Union (`Ctrl + +`):</strong> Hợp các hình thành một hình duy nhất.</li>
-                <li><strong>Difference (`Ctrl + -`):</strong> Hiệu hai hình (lấy hình dưới trừ phần giao với hình trên).</li>
-                <li><strong>Intersection (`Ctrl + *`):</strong> Lấy phần giao nhau của các hình.</li>
+                <li><strong>Union (<code>Ctrl + +</code>):</strong> Hợp các hình thành một hình duy nhất.</li>
+                <li><strong>Difference (<code>Ctrl + -</code>):</strong> Hiệu hai hình (lấy hình dưới trừ phần giao với hình trên).</li>
+                <li><strong>Intersection (<code>Ctrl + *</code>):</strong> Lấy phần giao nhau của các hình.</li>
             </ul>
         `,
         exercise: {
