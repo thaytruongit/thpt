@@ -394,7 +394,7 @@ const KNTT10_LESSONS_DEFAULT = [
         summary: 'Thực hành thiết kế sản phẩm đồ hoạ hoàn chỉnh (Poster, Logo, Banner), căn chỉnh bố cục và xuất tệp ảnh PNG chất lượng cao.',
         knowledge: `
             <h4>1. Xuất sản phẩm đồ hoạ (Export PNG Image)</h4>
-            <p>Trong Inkscape, tệp gốc lưu dưới dạng <code>.svg</code> để chỉnh sửa về sau; khi đem in ấn hoặc đăng web cần dùng lệnh <strong>File ➔ Export PNG Image (`Shift + Ctrl + E`)</strong>.</p>
+            <p>Trong Inkscape, tệp gốc lưu dưới dạng <code>.svg</code> để chỉnh sửa về sau; khi đem in ấn hoặc đăng web cần dùng lệnh <strong>File ➔ Export PNG Image (<code>Shift + Ctrl + E</code>)</strong>.</p>
         `,
         exercise: {
             id: 'ex_b15', type: 'ALGORITHM', title: 'Kiểm tra tỉ lệ khung hình chuẩn 16:9 của Banner đồ hoạ',
